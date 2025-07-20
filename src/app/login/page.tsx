@@ -6,16 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Briefcase } from "lucide-react";
-import { useActionState, useEffect } from 'react';
+import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useRouter } from 'next/navigation';
 import { login } from '@/app/actions/auth';
 
 const initialState = {
   message: '',
   errors: {},
-  success: false,
-  redirectTo: '',
 };
 
 function SubmitButton() {
@@ -29,13 +26,6 @@ function SubmitButton() {
 
 export default function LoginPage() {
   const [state, formAction] = useActionState(login, initialState);
-  const router = useRouter();
-
-  useEffect(() => {
-    if (state.success && state.redirectTo) {
-      router.push(state.redirectTo);
-    }
-  }, [state, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">

@@ -46,8 +46,6 @@ export async function signup(prevState: any, formData: FormData) {
       password: hashedPassword,
     });
 
-    // This part is a placeholder for session creation with a library like NextAuth.js
-    // For now, we'll assume a successful signup should check for a store.
     const store = await Store.findOne({ userId: user._id });
     if (store) {
       redirect('/dashboard');
@@ -86,25 +84,26 @@ export async function login(prevState: any, formData: FormData) {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return { ...prevState, message: 'Invalid credentials.' };
+      return { message: 'Invalid credentials.' };
     }
 
     const passwordsMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordsMatch) {
-      return { ...prevState, message: 'Invalid credentials.' };
+      return { message: 'Invalid credentials.' };
     }
 
     const store = await Store.findOne({ userId: user._id });
-    
-    return {
-      ...prevState,
-      success: true,
-      redirectTo: store ? '/dashboard' : '/dashboard/create-store',
-    };
-
+    if (store) {
+      redirect('/dashboard');
+    } else {
+      redirect('/dashboard/create-store');
+    }
   } catch (error) {
     console.error(error);
-    return { ...prevState, message: 'Something went wrong. Please try again.' };
+    if ((error as any).type === 'NextRedirect') {
+      throw error;
+    }
+    return { message: 'Something went wrong. Please try again.' };
   }
 }
