@@ -28,7 +28,7 @@ export async function signup(prevState: any, formData: FormData) {
   }
   
   const { firstName, lastName, email, password } = validatedFields.data;
-
+  let user;
   try {
     await dbConnect();
 
@@ -39,26 +39,23 @@ export async function signup(prevState: any, formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
+    user = await User.create({
       firstName,
       lastName,
       email,
       password: hashedPassword,
     });
-
-    const store = await Store.findOne({ userId: user._id });
-    if (store) {
-      redirect('/dashboard');
-    } else {
-      redirect('/dashboard/create-store');
-    }
     
   } catch (e) {
     console.error(e);
-    if ((e as any).type === 'NextRedirect') {
-      throw e;
-    }
     return { message: 'Something went wrong. Please try again.' };
+  }
+
+  const store = await Store.findOne({ userId: user._id });
+  if (store) {
+    redirect('/dashboard');
+  } else {
+    redirect('/dashboard/create-store');
   }
 }
 
@@ -81,10 +78,10 @@ export async function login(prevState: any, formData: FormData) {
   }
 
   const { email, password } = validatedFields.data;
-
+  let user;
   try {
     await dbConnect();
-    const user = await User.findOne({ email });
+    user = await User.findOne({ email });
 
     if (!user) {
       return { message: 'Invalid credentials.' };
@@ -95,20 +92,16 @@ export async function login(prevState: any, formData: FormData) {
     if (!passwordsMatch) {
       return { message: 'Invalid credentials.' };
     }
-
-    const store = await Store.findOne({ userId: user._id });
-
-    if (store) {
-        redirect('/dashboard');
-    } else {
-        redirect('/dashboard/create-store');
-    }
-
   } catch (error) {
     console.error(error);
-    if ((error as any).type === 'NextRedirect') {
-      throw error;
-    }
     return { message: 'Something went wrong. Please try again.' };
+  }
+
+  const store = await Store.findOne({ userId: user._id });
+
+  if (store) {
+      redirect('/dashboard');
+  } else {
+      redirect('/dashboard/create-store');
   }
 }
