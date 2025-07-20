@@ -60,7 +60,9 @@ export default function LoginPage() {
               {state?.errors?.email && <p className="text-sm text-destructive">{state.errors.email[0]}</p>}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center">
+                 <Label htmlFor="password">Password</Label>
+              </div>
               <Input id="password" name="password" type="password" required />
               {state?.errors?.password && <p className="text-sm text-destructive">{state.errors.password[0]}</p>}
             </div>
