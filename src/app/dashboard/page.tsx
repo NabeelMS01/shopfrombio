@@ -6,8 +6,50 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DollarSign, ShoppingBag, Users } from "lucide-react";
+import dbConnect from "@/lib/mongoose";
+import Store from "@/models/Store";
+import { redirect } from 'next/navigation';
 
-export default function DashboardPage() {
+// Placeholder for getting user ID from session
+async function getUserId() {
+    const User = (await import('@/models/User')).default;
+    await dbConnect();
+    const user = await User.findOne().sort({_id: -1});
+    return user?._id;
+}
+
+async function getDashboardData() {
+  await dbConnect();
+  const userId = await getUserId();
+  if (!userId) return null;
+
+  const store = await Store.findOne({ userId }).lean();
+  if (!store) return null;
+
+  // In a real app, you would fetch real data.
+  // const totalRevenue = await Order.aggregate([...]);
+  // const salesCount = await Order.countDocuments({...});
+  // const productCount = await Product.countDocuments({...});
+
+  return {
+    store,
+    totalRevenue: 0,
+    salesCount: 0,
+    productCount: 0,
+  };
+}
+
+
+export default async function DashboardPage() {
+  const data = await getDashboardData();
+  
+  if (!data) {
+    redirect('/dashboard/create-store');
+  }
+
+  const { store, totalRevenue, salesCount, productCount } = data;
+  const currencySymbol = new Intl.NumberFormat('en-US', { style: 'currency', currency: store.currency || 'USD' }).formatToParts(0).find(p => p.type === 'currency')?.value || '$';
+
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
@@ -19,9 +61,9 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$45,231.89</div>
+            <div className="text-2xl font-bold">{currencySymbol}{totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              +20.1% from last month
+              Based on completed sales
             </p>
           </CardContent>
         </Card>
@@ -31,9 +73,9 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+2350</div>
+            <div className="text-2xl font-bold">+{salesCount}</div>
             <p className="text-xs text-muted-foreground">
-              +180.1% from last month
+              Total sales this month
             </p>
           </CardContent>
         </Card>
@@ -43,7 +85,7 @@ export default function DashboardPage() {
             <ShoppingBag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">42</div>
+            <div className="text-2xl font-bold">{productCount}</div>
             <p className="text-xs text-muted-foreground">
               Total products in store
             </p>
@@ -52,7 +94,7 @@ export default function DashboardPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Welcome to your ShopFromBio!</CardTitle>
+          <CardTitle>Welcome to {store.name}!</CardTitle>
           <CardDescription>
             Here you can manage your products, view sales, and customize your
             store.

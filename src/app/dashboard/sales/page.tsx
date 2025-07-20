@@ -16,44 +16,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import SalesSummary from "@/components/SalesSummary";
 
-const mockSales = [
-    {
-        id: "1",
-        customer: "Liam Johnson",
-        email: "liam@example.com",
-        product: "Classic T-Shirt",
-        price: "$25.00",
-        date: "2023-06-23",
-        status: "Fulfilled"
-    },
-    {
-        id: "2",
-        customer: "Olivia Smith",
-        email: "olivia@example.com",
-        product: "Modern Hoodie",
-        price: "$55.00",
-        date: "2023-06-24",
-        status: "Fulfilled"
-    },
-    {
-        id: "3",
-        customer: "Noah Williams",
-        email: "noah@example.com",
-        product: "Designer Jeans",
-        price: "$120.00",
-        date: "2023-06-25",
-        status: "Pending"
-    },
-    {
-        id: "4",
-        customer: "Emma Brown",
-        email: "emma@example.com",
-        product: "Classic T-Shirt",
-        price: "$25.00",
-        date: "2023-06-26",
-        status: "Fulfilled"
-    },
-];
+// In a real app, this data would be fetched from the database
+const mockSales: any[] = [];
 
 export default function SalesPage() {
     const salesDataForAI = JSON.stringify(mockSales.map(s => ({
@@ -83,7 +47,7 @@ export default function SalesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockSales.map((sale) => (
+              {mockSales.length > 0 ? mockSales.map((sale) => (
                 <TableRow key={sale.id}>
                   <TableCell>
                     <div className="font-medium">{sale.customer}</div>
@@ -100,7 +64,13 @@ export default function SalesPage() {
                   <TableCell className="hidden md:table-cell">{sale.date}</TableCell>
                   <TableCell className="text-right">{sale.price}</TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No sales yet.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

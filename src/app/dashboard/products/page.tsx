@@ -36,32 +36,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 
-const mockProducts = [
-  {
-    id: "1",
-    name: "Classic T-Shirt",
-    price: "$25.00",
-    status: "Active",
-    stock: 100,
-    image: "https://placehold.co/48x48.png",
-  },
-  {
-    id: "2",
-    name: "Modern Hoodie",
-    price: "$55.00",
-    status: "Active",
-    stock: 50,
-    image: "https://placehold.co/48x48.png",
-  },
-  {
-    id: "3",
-    name: "Designer Jeans",
-    price: "$120.00",
-    status: "Archived",
-    stock: 0,
-    image: "https://placehold.co/48x48.png",
-  },
-];
+// In a real app, this would be fetched from the database.
+const mockProducts: any[] = [];
 
 export default function ProductsPage() {
   return (
@@ -136,14 +112,14 @@ export default function ProductsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockProducts.map((product) => (
+            {mockProducts.length > 0 ? mockProducts.map((product) => (
               <TableRow key={product.id}>
                 <TableCell className="hidden sm:table-cell">
                   <Image
                     alt="Product image"
                     className="aspect-square rounded-md object-cover"
                     height="48"
-                    src={product.image}
+                    src={product.image || 'https://placehold.co/48x48.png'}
                     width="48"
                     data-ai-hint="product clothing"
                   />
@@ -176,7 +152,13 @@ export default function ProductsPage() {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+            )) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  No products found. Start by adding a new product.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>
