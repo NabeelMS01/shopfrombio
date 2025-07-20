@@ -40,7 +40,7 @@ export default function UserNav() {
           </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <Link href="/">
+        <Link href="/login">
           <DropdownMenuItem>
             Log out
           </DropdownMenuItem>
