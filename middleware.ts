@@ -12,9 +12,7 @@ export function middleware(request: NextRequest) {
     return new Response('No host header', { status: 400 });
   }
 
-  const appDomain = process.env.NODE_ENV === 'production'
-    ? 'your-production-domain.com' // TODO: Replace with your actual production domain
-    : 'localhost:9002';
+  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:9002';
   
   // Prevent redirect loops
   if (pathname.startsWith(`/_next`)) {
