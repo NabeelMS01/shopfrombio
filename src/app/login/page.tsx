@@ -6,12 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Briefcase } from "lucide-react";
-import { useActionState, useEffect } from 'react';
+import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useRouter } from 'next/navigation';
 import { login } from '@/app/actions/auth';
 
-const initialState: { message: string, errors?: any, success?: boolean, hasStore?: boolean } = {
+const initialState: { message: string, errors?: any } = {
   message: '',
   errors: {},
 };
@@ -27,18 +26,6 @@ function SubmitButton() {
 
 export default function LoginPage() {
   const [state, formAction] = useActionState(login, initialState);
-  const router = useRouter();
-
-  useEffect(() => {
-    if (state.success) {
-      if (state.hasStore) {
-        router.push('/dashboard');
-      } else {
-        router.push('/dashboard/create-store');
-      }
-    }
-  }, [state.success, state.hasStore, router]);
-
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
