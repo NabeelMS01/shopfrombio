@@ -1,8 +1,6 @@
 'use client';
 
 import Link from "next/link";
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Briefcase } from "lucide-react";
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { login } from '@/app/actions/auth';
 
 const initialState = {
@@ -44,7 +44,7 @@ export default function LoginPage() {
           <CardTitle className="text-2xl text-center">Login</CardTitle>
           <CardDescription className="text-center">
             Enter your email below to login to your account
-          </DardDescription>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="space-y-4">
@@ -60,9 +60,7 @@ export default function LoginPage() {
               {state?.errors?.email && <p className="text-sm text-destructive">{state.errors.email[0]}</p>}
             </div>
             <div className="grid gap-2">
-              <div className="flex items-center">
-                 <Label htmlFor="password">Password</Label>
-              </div>
+              <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required />
               {state?.errors?.password && <p className="text-sm text-destructive">{state.errors.password[0]}</p>}
             </div>
