@@ -1,7 +1,8 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const initialState = {
   message: '',
   errors: {},
+  success: false,
 };
 
 function SubmitButton() {
@@ -32,6 +34,14 @@ function SubmitButton() {
 
 export default function CreateStorePage() {
   const [state, formAction] = useActionState(createStore, initialState);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.success) {
+      router.push('/dashboard');
+    }
+  }, [state.success, router]);
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40">

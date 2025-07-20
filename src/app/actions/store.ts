@@ -44,7 +44,7 @@ export async function createStore(prevState: any, formData: FormData) {
 
     const existingSubdomain = await Store.findOne({ subdomain });
     if(existingSubdomain) {
-        return { message: 'Subdomain is already taken.' };
+        return { ...prevState, message: 'Subdomain is already taken.' };
     }
 
     await Store.create({
@@ -54,15 +54,18 @@ export async function createStore(prevState: any, formData: FormData) {
       userId,
     });
 
+    return { ...prevState, success: true, message: 'Store created successfully!' };
+
   } catch (e: any) {
     console.error(e);
     if (e.message.includes('No user found')) {
-      return { message: 'Could not create store: No user session found.' };
+      return { ...prevState, message: 'Could not create store: No user session found.' };
     }
-    return { message: 'Something went wrong. Please try again.' };
+    return { ...prevState, message: 'Something went wrong. Please try again.' };
   }
 
-  redirect('/dashboard');
+  // This redirect will now be handled on the client
+  // redirect('/dashboard');
 }
 
 const updateStoreSchema = z.object({
