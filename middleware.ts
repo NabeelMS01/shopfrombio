@@ -10,32 +10,24 @@ export function middleware(request: NextRequest) {
     return new Response('No host header', { status: 400 });
   }
 
-  // Use a more specific domain from environment variables, or a default for local dev
-  const appDomain = process.env.APP_DOMAIN || 'localhost:9002';
-  
   // Prevent redirect loops for Next.js internal assets
   if (pathname.startsWith('/_next')) {
     return NextResponse.next();
   }
 
+  // Use a more specific domain from environment variables, or a default for local dev
+  const appDomain = process.env.APP_DOMAIN || 'localhost:9002';
+
   // Extract the subdomain by removing the app domain
-  const subdomain = host.replace(`.${appDomain}`, '');
-
-  // These are the public-facing routes of the main app
-  const publicRoutes = ['/', '/login', '/signup'];
-
-  // If the host is just the app domain (no subdomain) and the path is public, do nothing.
-  if (host === appDomain && publicRoutes.includes(pathname)) {
-    return NextResponse.next();
-  }
-
-  // It's a subdomain request, rewrite to the dynamic route
-  if (subdomain !== host) {
+  const subdomain = host.endsWith(`.${appDomain}`) ? host.replace(`.${appDomain}`, '') : null;
+  
+  // If a subdomain exists, rewrite to the dynamic store route.
+  if (subdomain) {
     url.pathname = `/${subdomain}${pathname}`;
     return NextResponse.rewrite(url);
   }
   
-  // All other requests can pass through
+  // Otherwise, it's a request for the main app, so do nothing.
   return NextResponse.next();
 }
 
