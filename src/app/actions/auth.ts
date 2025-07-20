@@ -86,26 +86,25 @@ export async function login(prevState: any, formData: FormData) {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return { message: 'Invalid credentials.' };
+      return { ...prevState, message: 'Invalid credentials.' };
     }
 
     const passwordsMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordsMatch) {
-      return { message: 'Invalid credentials.' };
+      return { ...prevState, message: 'Invalid credentials.' };
     }
 
-    // This is a placeholder for proper session management (e.g., NextAuth.js)
-    // We'll proceed to check for a store.
     const store = await Store.findOne({ userId: user._id });
-    if (store) {
-      redirect('/dashboard');
-    } else {
-      redirect('/dashboard/create-store');
-    }
+    
+    return {
+      ...prevState,
+      success: true,
+      redirectTo: store ? '/dashboard' : '/dashboard/create-store',
+    };
 
   } catch (error) {
     console.error(error);
-    return { message: 'Something went wrong. Please try again.' };
+    return { ...prevState, message: 'Something went wrong. Please try again.' };
   }
 }
