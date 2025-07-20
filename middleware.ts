@@ -14,6 +14,10 @@ export const config = {
 };
 
 export default function middleware(req: NextRequest) {
+  // The middleware logic is temporarily disabled for debugging.
+  return NextResponse.next();
+
+  /*
   const url = req.nextUrl;
 
   // Get hostname of request (e.g. demo.vercel.pub, localhost:3000)
@@ -37,4 +41,5 @@ export default function middleware(req: NextRequest) {
   }
 
   return NextResponse.next();
+  */
 }
