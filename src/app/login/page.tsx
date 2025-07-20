@@ -47,25 +47,27 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-              />
-              {state?.errors?.email && <p className="text-sm text-destructive">{state.errors.email[0]}</p>}
+          <form action={formAction}>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                />
+                {state?.errors?.email && <p className="text-sm text-destructive">{state.errors.email[0]}</p>}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" name="password" type="password" required />
+                {state?.errors?.password && <p className="text-sm text-destructive">{state.errors.password[0]}</p>}
+              </div>
+              {state?.message && <p className="text-sm text-destructive text-center">{state.message}</p>}
+              <SubmitButton />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required />
-              {state?.errors?.password && <p className="text-sm text-destructive">{state.errors.password[0]}</p>}
-            </div>
-             {state?.message && !state.errors && <p className="text-sm text-destructive text-center">{state.message}</p>}
-            <SubmitButton />
           </form>
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
