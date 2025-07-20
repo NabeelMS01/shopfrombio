@@ -9,39 +9,29 @@ export function middleware(request: NextRequest) {
   if (!host) {
     return new Response('No host header', { status: 400 });
   }
-  
-  // This is your production domain.
-  // In development, it will be localhost:9002.
+
+  // Define your production domain. In development, it will be localhost:9002.
   const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:9002';
 
-  // These are the public routes that should not be rewritten.
-  // We check if the pathname starts with any of these.
-  const publicRoutes = [
-    '/',
-    '/login',
-    '/signup',
-    '/api',
-    '/_next',
-    '/favicon.ico',
-    // Add other public assets or routes here if needed
-  ];
-
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.next();
-  }
-
-  // Determine the subdomain by removing the app domain from the host.
+  // Extract the subdomain.
+  // It's a subdomain if the host does not match the app domain.
   const subdomain = host.endsWith(`.${appDomain}`)
     ? host.replace(`.${appDomain}`, '')
     : null;
 
-  // If a subdomain exists, rewrite the path to the dynamic store route.
-  if (subdomain && subdomain !== 'www') {
-    url.pathname = `/${subdomain}${pathname}`;
-    return NextResponse.rewrite(url);
+  // If there's a subdomain, rewrite the path to the dynamic store route.
+  // And it's not one of the public assets.
+  if (subdomain && !pathname.startsWith('/_next') && !pathname.startsWith('/favicon.ico')) {
+      // Don't rewrite for the root of the subdomain, let it pass through.
+      if (pathname === '/') {
+          url.pathname = `/${subdomain}`;
+          return NextResponse.rewrite(url);
+      }
+      url.pathname = `/${subdomain}${pathname}`;
+      return NextResponse.rewrite(url);
   }
 
-  // For any other case, let the request proceed.
+  // For all other cases (no subdomain), let the request proceed as normal.
   return NextResponse.next();
 }
 
