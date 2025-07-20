@@ -10,9 +10,12 @@ export function middleware(request: NextRequest) {
     return new Response('No host header', { status: 400 });
   }
   
-  const appDomain = process.env.APP_DOMAIN || 'localhost:9002';
-  
-  // These are the public routes that should not be rewritten
+  // This is your production domain.
+  // In development, it will be localhost:9002.
+  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:9002';
+
+  // These are the public routes that should not be rewritten.
+  // We check if the pathname starts with any of these.
   const publicRoutes = [
     '/',
     '/login',
@@ -20,23 +23,25 @@ export function middleware(request: NextRequest) {
     '/api',
     '/_next',
     '/favicon.ico',
+    // Add other public assets or routes here if needed
   ];
 
-  // If the pathname starts with a public route, do nothing.
   if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
+  // Determine the subdomain by removing the app domain from the host.
   const subdomain = host.endsWith(`.${appDomain}`)
     ? host.replace(`.${appDomain}`, '')
     : null;
 
-  // If a subdomain exists, rewrite to the dynamic store route.
-  if (subdomain) {
+  // If a subdomain exists, rewrite the path to the dynamic store route.
+  if (subdomain && subdomain !== 'www') {
     url.pathname = `/${subdomain}${pathname}`;
     return NextResponse.rewrite(url);
   }
 
+  // For any other case, let the request proceed.
   return NextResponse.next();
 }
 
