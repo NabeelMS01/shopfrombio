@@ -34,7 +34,7 @@ export default function DashboardLayout({
             className="group flex h-9 w-full items-center justify-start rounded-lg px-3 text-lg font-semibold text-primary-foreground transition-colors md:h-8"
           >
             <Briefcase className="h-6 w-6 text-primary transition-all group-hover:scale-110" />
-            <span className="ml-2 text-foreground">BioShop</span>
+            <span className="ml-2 text-foreground">ShopFromBio</span>
           </Link>
           <Link
             href="/dashboard"
@@ -82,7 +82,7 @@ export default function DashboardLayout({
                   className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
                   <Briefcase className="h-5 w-5 transition-all group-hover:scale-110" />
-                  <span className="sr-only">BioShop</span>
+                  <span className="sr-only">ShopFromBio</span>
                 </Link>
                 <Link
                   href="/dashboard"

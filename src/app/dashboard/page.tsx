@@ -52,7 +52,7 @@ export default function DashboardPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Welcome to your BioShop!</CardTitle>
+          <CardTitle>Welcome to your ShopFromBio!</CardTitle>
           <CardDescription>
             Here you can manage your products, view sales, and customize your
             store.

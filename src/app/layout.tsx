@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'BioShop',
-  description: 'Create your own online store with BioShop.',
+  title: 'ShopFromBio',
+  description: 'Create your own online store with ShopFromBio.',
 };
 
 export default function RootLayout({

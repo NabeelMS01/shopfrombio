@@ -39,7 +39,7 @@ export default function SignupPage() {
         <CardHeader>
           <div className="flex items-center justify-center mb-4">
             <Briefcase className="h-8 w-8 text-primary" />
-            <span className="ml-2 text-2xl font-semibold">BioShop</span>
+            <span className="ml-2 text-2xl font-semibold">ShopFromBio</span>
           </div>
           <CardTitle className="text-xl text-center">Sign Up</CardTitle>
           <CardDescription className="text-center">

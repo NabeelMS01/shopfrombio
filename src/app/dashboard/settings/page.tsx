@@ -32,7 +32,7 @@ export default function SettingsPage() {
           <Label htmlFor="subdomain">Subdomain</Label>
           <div className="flex items-center">
             <Input id="subdomain" type="text" placeholder="my-store" />
-            <span className="ml-2 text-muted-foreground">.bioshop.com</span>
+            <span className="ml-2 text-muted-foreground">.shopfrombio.com</span>
           </div>
           <p className="text-sm text-muted-foreground">
             Your store will be available at this subdomain.

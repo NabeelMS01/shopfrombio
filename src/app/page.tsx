@@ -14,12 +14,10 @@ export default function HomePage() {
               <div className="flex flex-col justify-center space-y-4">
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                    Your Online Store, Your Rules
+                    Build your store and start selling
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    BioShop makes it easy to launch your own e-commerce store.
-                    No coding required. Just add your products and start
-                    selling.
+                    This application helps you build your own store and start selling your products or services, like a shop from your bio link.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -83,7 +81,7 @@ export default function HomePage() {
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
         <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} BioShop. All rights reserved.
+          &copy; {new Date().getFullYear()} ShopFromBio. All rights reserved.
         </p>
       </footer>
     </div>
