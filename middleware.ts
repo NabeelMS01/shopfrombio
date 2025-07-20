@@ -14,10 +14,6 @@ export const config = {
 };
 
 export default function middleware(req: NextRequest) {
-  // The middleware logic is temporarily disabled for debugging.
-  return NextResponse.next();
-
-  /*
   const url = req.nextUrl;
 
   // Get hostname of request (e.g. demo.vercel.pub, localhost:3000)
@@ -28,8 +24,8 @@ export default function middleware(req: NextRequest) {
   // Get the pathname of the request (e.g. /, /about, /blog/first-post)
   const path = url.pathname;
   
-  // Don't rewrite requests to the root page.
-  if (host === appDomain && path === '/') {
+  // Don't rewrite requests to the root page, login, or signup
+  if (host === appDomain && (path === '/' || path === '/login' || path === '/signup')) {
     return NextResponse.next();
   }
 
@@ -41,5 +37,4 @@ export default function middleware(req: NextRequest) {
   }
 
   return NextResponse.next();
-  */
 }
