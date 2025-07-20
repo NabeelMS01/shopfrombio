@@ -55,6 +55,9 @@ export async function signup(prevState: any, formData: FormData) {
     
   } catch (e) {
     console.error(e);
+    if ((e as any).type === 'NextRedirect') {
+      throw e;
+    }
     return { message: 'Something went wrong. Please try again.' };
   }
 }
@@ -94,16 +97,11 @@ export async function login(prevState: any, formData: FormData) {
     }
 
     const store = await Store.findOne({ userId: user._id });
-    if (store) {
-      redirect('/dashboard');
-    } else {
-      redirect('/dashboard/create-store');
-    }
+
+    return { success: true, hasStore: !!store };
+
   } catch (error) {
     console.error(error);
-    if ((error as any).type === 'NextRedirect') {
-      throw error;
-    }
     return { message: 'Something went wrong. Please try again.' };
   }
 }
