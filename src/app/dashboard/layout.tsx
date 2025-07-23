@@ -13,17 +13,11 @@ import UserNav from "@/components/UserNav";
 import dbConnect from "@/lib/mongoose";
 import StoreModel from "@/models/Store";
 import DashboardNav from "@/components/DashboardNav";
+import { getUserFromSession } from "@/lib/session";
+import { redirect } from "next/navigation";
 
-// This is a placeholder for getting the current user's ID
-async function getUserId() {
-    const User = (await import('@/models/User')).default;
-    await dbConnect();
-    const user = await User.findOne().sort({_id: -1});
-    return user?._id;
-}
 
-async function getStore() {
-    const userId = await getUserId();
+async function getStore(userId: string) {
     if (!userId) return null;
     await dbConnect();
     const store = await StoreModel.findOne({ userId }).lean();
@@ -35,7 +29,24 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const store = await getStore();
+  const user = await getUserFromSession();
+  if (!user) {
+    redirect('/login');
+  }
+  
+  const store = await getStore(user._id);
+
+  if (!store) {
+    // If the user has no store, they should be on the create-store page.
+    // We allow this page to render within the layout.
+    const CreateStorePage = (await import('./create-store/page')).default;
+    return (
+        <div className="flex items-center justify-center min-h-screen">
+             <CreateStorePage />
+        </div>
+    );
+  }
+
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
