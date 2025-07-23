@@ -20,11 +20,16 @@ export default function middleware(req: NextRequest) {
   // Check for session cookie
   const sessionCookie = req.cookies.get('session');
 
-  // If user is logged in, redirect from login/signup to dashboard. This must be the first check.
+  // If user is logged in, redirect from login/signup to dashboard.
   if (sessionCookie && (path === '/login' || path === '/signup')) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
   
+  // If user is NOT logged in and trying to access dashboard, redirect to login.
+  if (!sessionCookie && path.startsWith('/dashboard')) {
+      return NextResponse.redirect(new URL('/login', req.url));
+  }
+
   // Get hostname of request (e.g. demo.vercel.pub, localhost:3000)
   const host = req.headers.get('host')!;
 
