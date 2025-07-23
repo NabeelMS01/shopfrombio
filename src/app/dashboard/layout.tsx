@@ -9,7 +9,6 @@ import StoreModel from "@/models/Store";
 import DashboardNav from "@/components/DashboardNav";
 import { getUserFromSession } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 
 async function getStore(userId: string) {
     if (!userId) return null;
@@ -24,22 +23,24 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await getUserFromSession();
+  // Middleware should handle this, but as a safeguard.
   if (!user) {
-    // This is a fallback, middleware should already have redirected
     redirect('/login');
   }
   
   const store = await getStore(user._id);
-  const pathname = headers().get('next-url');
+  
+  const childComponent = children as React.ReactElement;
+  const isCreateStorePage = (childComponent.type as any).name === 'CreateStorePage';
 
   // If the user has no store, and they are not trying to access the create-store page,
   // redirect them to the create-store page.
-  if (!store && pathname !== '/dashboard/create-store') {
+  if (!store && !isCreateStorePage) {
     redirect('/dashboard/create-store');
   }
   
   // If a user has a store but tries to access the create page, redirect to dashboard
-  if(store && pathname === '/dashboard/create-store'){
+  if(store && isCreateStorePage){
     redirect('/dashboard');
   }
 
