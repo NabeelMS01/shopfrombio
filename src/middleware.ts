@@ -13,6 +13,26 @@ export const config = {
   ],
 };
 
+// Function to get the main domain from a hostname
+function getDomain(host: string) {
+    // Split the host by dots
+    const parts = host.split('.');
+    
+    // For local development like 'localhost:9002', return the full host
+    if (parts.length <= 1 || parts[parts.length-1] === 'localhost') {
+        return host;
+    }
+    
+    // For production domains like 'sub.example.com', return 'example.com'
+    // This assumes a standard TLD like .com, .org, etc.
+    if (parts.length > 2) {
+        return parts.slice(-2).join('.');
+    }
+    
+    return host;
+}
+
+
 export default function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const path = url.pathname;
@@ -30,7 +50,7 @@ export default function middleware(req: NextRequest) {
 
   // Handle subdomains
   const host = req.headers.get('host')!;
-  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:9002';
+  const appDomain = getDomain(host);
   
   // Don't rewrite for the main app's public pages or dashboard
   if (host === appDomain) {
