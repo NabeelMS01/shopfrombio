@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import dbConnect from './mongoose';
-import User from '@/models/User';
+import User, { IUser } from '@/models/User';
 import { cache } from 'react';
 
 // Using React's cache to deduplicate requests within a single render pass.
@@ -19,7 +19,7 @@ export const getUserFromSession = cache(async () => {
 
         await dbConnect();
         // lean() returns a plain JS object, which is faster and avoids Mongoose-specific properties.
-        const user = await User.findById(decoded.userId).lean(); 
+        const user = await User.findById<IUser>(decoded.userId).lean(); 
         
         if (!user) {
             return null;
