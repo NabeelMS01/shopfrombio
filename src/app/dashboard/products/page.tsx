@@ -1,5 +1,6 @@
-import { MoreHorizontal, PlusCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import dbConnect from "@/lib/mongoose";
+import Product from "@/models/Product";
+import Store from "@/models/Store";
 import {
   Card,
   CardContent,
@@ -8,13 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Table,
   TableBody,
   TableCell,
@@ -22,24 +16,50 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
+import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import AddProductDialog from "@/components/AddProductDialog";
 
-// In a real app, this would be fetched from the database.
-const mockProducts: any[] = [];
+// This is a placeholder for getting the current user's ID
+async function getUserId() {
+  const User = (await import('@/models/User')).default;
+  await dbConnect();
+  const user = await User.findOne().sort({_id: -1});
+  return user?._id;
+}
 
-export default function ProductsPage() {
+
+async function getProducts() {
+  const userId = await getUserId();
+  if (!userId) return { products: [], storeCurrency: 'USD' };
+
+  await dbConnect();
+  const store = await Store.findOne({ userId }).lean();
+  if (!store) return { products: [], storeCurrency: 'USD' };
+
+  const products = await Product.find({ storeId: store._id }).lean();
+
+  return { 
+    products: JSON.parse(JSON.stringify(products)),
+    storeCurrency: store.currency || 'USD'
+  };
+}
+
+
+export default async function ProductsPage() {
+  const { products, storeCurrency } = await getProducts();
+  const currencySymbol = new Intl.NumberFormat('en-US', { style: 'currency', currency: storeCurrency }).formatToParts(0).find(p => p.type === 'currency')?.value || '$';
+
+
   return (
     <Card>
       <CardHeader>
@@ -50,47 +70,7 @@ export default function ProductsPage() {
               Manage your products and view their sales performance.
             </CardDescription>
           </div>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-1">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  Add Product
-                </span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Product</DialogTitle>
-                <DialogDescription>
-                  Fill in the details below to add a new product to your store.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input id="name" defaultValue="Classic T-Shirt" className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="price" className="text-right">
-                    Price
-                  </Label>
-                  <Input id="price" defaultValue="$25.00" className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="stock" className="text-right">
-                    Stock
-                  </Label>
-                  <Input id="stock" type="number" defaultValue="100" className="col-span-3" />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit">Save product</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <AddProductDialog />
         </div>
       </CardHeader>
       <CardContent>
@@ -101,7 +81,7 @@ export default function ProductsPage() {
                 <span className="sr-only">Image</span>
               </TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead className="hidden md:table-cell">Price</TableHead>
               <TableHead className="hidden md:table-cell">
                 Stock
@@ -112,26 +92,26 @@ export default function ProductsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockProducts.length > 0 ? mockProducts.map((product) => (
-              <TableRow key={product.id}>
+            {products.length > 0 ? products.map((product: any) => (
+              <TableRow key={product._id}>
                 <TableCell className="hidden sm:table-cell">
                   <Image
                     alt="Product image"
                     className="aspect-square rounded-md object-cover"
                     height="48"
-                    src={product.image || 'https://placehold.co/48x48.png'}
+                    src={product.images?.[0] || 'https://placehold.co/48x48.png'}
                     width="48"
                     data-ai-hint="product clothing"
                   />
                 </TableCell>
-                <TableCell className="font-medium">{product.name}</TableCell>
+                <TableCell className="font-medium">{product.title}</TableCell>
                 <TableCell>
-                  <Badge variant={product.status === "Active" ? "default" : "outline"}>
-                    {product.status}
+                  <Badge variant="outline" className="capitalize">
+                    {product.productType}
                   </Badge>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  {product.price}
+                  {currencySymbol}{product.price}
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {product.stock}
