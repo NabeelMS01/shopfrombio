@@ -20,7 +20,7 @@ export default function middleware(req: NextRequest) {
   // Check for session cookie
   const sessionCookie = req.cookies.get('session');
 
-  // If user is logged in, redirect from login/signup to dashboard
+  // If user is logged in, redirect from login/signup to dashboard. This must be the first check.
   if (sessionCookie && (path === '/login' || path === '/signup')) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
