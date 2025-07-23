@@ -33,9 +33,23 @@ async function getStore(userId: string) {
 
 export default async function DashboardPage() {
   const user = await getUserFromSession();
-  const store = await getStore(user!._id);
+
+  if (!user) {
+    // This should ideally be handled by middleware, but as a fallback
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Authentication Error</CardTitle>
+          <CardDescription>Could not retrieve user session. Please log in again.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const store = await getStore(user._id);
   
   if (!store) {
+    // This case should be handled by the layout redirecting to create-store
     return (
       <Card>
         <CardHeader>

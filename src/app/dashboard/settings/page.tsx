@@ -12,7 +12,19 @@ async function getStore(userId: string) {
 
 export default async function SettingsPage() {
     const user = await getUserFromSession();
-    const store = await getStore(user!._id);
+
+    if (!user) {
+        return (
+            <Card>
+                <CardHeader>
+                  <CardTitle>Authentication Error</CardTitle>
+                  <CardDescription>Could not retrieve user session. Please log in again.</CardDescription>
+                </CardHeader>
+            </Card>
+        );
+    }
+
+    const store = await getStore(user._id);
     
     if (!store) {
         return (
