@@ -13,6 +13,7 @@ import DashboardNav from "@/components/DashboardNav";
 import { getUserFromSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { PanelLeft } from "lucide-react";
+import CreateStorePage from "./create-store/page";
 
 
 async function getStore(userId: string) {
@@ -35,9 +36,8 @@ export default async function DashboardLayout({
   const store = await getStore(user._id);
 
   if (!store) {
-    // If the user has no store, they must be on the create-store page.
-    // The create-store page is rendered directly and doesn't use this layout's children.
-    const CreateStorePage = (await import('./create-store/page')).default;
+    // If the user has no store, render the Create Store page directly.
+    // This prevents any child components that depend on `store` from crashing.
     return <CreateStorePage />;
   }
   
