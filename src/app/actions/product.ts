@@ -18,6 +18,7 @@ async function getUserId() {
 
 const variantOptionSchema = z.object({
     name: z.string().min(1, "Option name cannot be empty."),
+    stock: z.coerce.number().optional(),
 });
 
 const variantSchema = z.object({

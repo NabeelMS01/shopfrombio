@@ -18,7 +18,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { addProduct } from '@/app/actions/product';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 
 const initialState = {
   message: '',
@@ -35,7 +34,7 @@ function SubmitButton() {
   );
 }
 
-type VariantOption = { name: string };
+type VariantOption = { name: string; stock?: number };
 type Variant = { type: string; options: VariantOption[] };
 
 export default function AddProductDialog() {
@@ -56,7 +55,7 @@ export default function AddProductDialog() {
   }, [state, toast]);
 
   const handleAddVariant = () => {
-    setVariants([...variants, { type: '', options: [{ name: '' }] }]);
+    setVariants([...variants, { type: '', options: [{ name: '', stock: undefined }] }]);
   };
 
   const handleRemoveVariant = (index: number) => {
@@ -72,7 +71,7 @@ export default function AddProductDialog() {
 
   const handleAddVariantOption = (variantIndex: number) => {
     const newVariants = [...variants];
-    newVariants[variantIndex].options.push({ name: '' });
+    newVariants[variantIndex].options.push({ name: '', stock: undefined });
     setVariants(newVariants);
   };
 
@@ -82,9 +81,15 @@ export default function AddProductDialog() {
     setVariants(newVariants);
   };
 
-  const handleVariantOptionChange = (variantIndex: number, optionIndex: number, name: string) => {
+  const handleVariantOptionChange = (variantIndex: number, optionIndex: number, field: 'name' | 'stock', value: string) => {
     const newVariants = [...variants];
-    newVariants[variantIndex].options[optionIndex].name = name;
+    const option = newVariants[variantIndex].options[optionIndex];
+    if (field === 'name') {
+        option.name = value;
+    } else {
+        // Allow empty string to clear the value, otherwise parse as number
+        option.stock = value === '' ? undefined : Number(value);
+    }
     setVariants(newVariants);
   };
 
@@ -106,7 +111,7 @@ export default function AddProductDialog() {
           </DialogDescription>
         </DialogHeader>
         <form action={formAction} className="space-y-6">
-          <input type="hidden" name="variants" value={JSON.stringify(variants)} />
+          <input type="hidden" name="variants" value={JSON.stringify(variants.map(v => ({...v, options: v.options.map(o => ({...o, stock: o.stock === undefined ? null : o.stock}))})))} />
           <div className="space-y-4">
              <div>
                 <Label htmlFor="title">Product Title</Label>
@@ -142,7 +147,7 @@ export default function AddProductDialog() {
                     </div>
                  </div>
                  <div>
-                    <Label htmlFor="stock">Stock</Label>
+                    <Label htmlFor="stock">Total Stock</Label>
                     <Input id="stock" name="stock" type="number" placeholder="e.g. 100" />
                      {state.errors?.stock && <p className="text-sm text-destructive mt-1">{state.errors.stock[0]}</p>}
                 </div>
@@ -173,25 +178,33 @@ export default function AddProductDialog() {
                        <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => handleRemoveVariant(vIndex)}>
                            <X className="h-4 w-4" />
                         </Button>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <Label>Variant Type</Label>
-                                <Input 
-                                    placeholder="e.g. Color, Size" 
-                                    value={variant.type}
-                                    onChange={(e) => handleVariantTypeChange(vIndex, e.target.value)}
-                                />
-                            </div>
+                        <div>
+                            <Label>Variant Type</Label>
+                            <Input 
+                                placeholder="e.g. Color, Size" 
+                                value={variant.type}
+                                onChange={(e) => handleVariantTypeChange(vIndex, e.target.value)}
+                            />
                         </div>
                         <div>
-                            <Label>Options</Label>
+                            <div className="grid grid-cols-3 gap-2 mb-1">
+                                <Label className="col-span-2">Option Name</Label>
+                                <Label>Stock (Optional)</Label>
+                            </div>
                             <div className="space-y-2">
                                 {variant.options.map((option, oIndex) => (
                                     <div key={oIndex} className="flex items-center gap-2">
                                         <Input 
                                             placeholder="e.g. Blue, XL"
+                                            className="col-span-2"
                                             value={option.name}
-                                            onChange={(e) => handleVariantOptionChange(vIndex, oIndex, e.target.value)}
+                                            onChange={(e) => handleVariantOptionChange(vIndex, oIndex, 'name', e.target.value)}
+                                        />
+                                         <Input 
+                                            type="number"
+                                            placeholder="e.g. 50"
+                                            value={option.stock ?? ''}
+                                            onChange={(e) => handleVariantOptionChange(vIndex, oIndex, 'stock', e.target.value)}
                                         />
                                         <Button type="button" variant="destructive" size="icon" onClick={() => handleRemoveVariantOption(vIndex, oIndex)}>
                                             <Trash2 className="h-4 w-4" />
