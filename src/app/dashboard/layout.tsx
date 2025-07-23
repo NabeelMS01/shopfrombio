@@ -1,8 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import {
-  Briefcase,
-} from "lucide-react";
+import { Briefcase, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import UserNav from "@/components/UserNav";
@@ -11,9 +9,7 @@ import StoreModel from "@/models/Store";
 import DashboardNav from "@/components/DashboardNav";
 import { getUserFromSession } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { PanelLeft } from "lucide-react";
-import CreateStorePage from "./create-store/page";
-
+import { headers } from "next/headers";
 
 async function getStore(userId: string) {
     if (!userId) return null;
@@ -24,10 +20,8 @@ async function getStore(userId: string) {
 
 export default async function DashboardLayout({
   children,
-  params
 }: {
   children: React.ReactNode;
-  params: any;
 }) {
   const user = await getUserFromSession();
   if (!user) {
@@ -35,18 +29,18 @@ export default async function DashboardLayout({
   }
   
   const store = await getStore(user._id);
+  const pathname = headers().get('next-url');
 
-  if (!store) {
-    // If the user has no store, render the Create Store page directly
-    // within the context of the main layout, but don't render the dashboard itself.
-    return <CreateStorePage />;
+  // If the user has no store, and they are not trying to access the create-store page,
+  // redirect them to the create-store page.
+  if (!store && pathname !== '/dashboard/create-store') {
+    redirect('/dashboard/create-store');
   }
   
-  // Pass store data to child server components via props.
-  // Next.js does this implicitly when pages are rendered inside a layout.
-  // We modify the children to inject the prop.
-   const childrenWithProps = React.cloneElement(children as React.ReactElement, { store });
-
+  // If a user has a store but tries to access the create page, redirect to dashboard
+  if(store && pathname === '/dashboard/create-store'){
+    redirect('/dashboard');
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -89,7 +83,7 @@ export default async function DashboardLayout({
           </div>
         </header>
         <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-          {childrenWithProps}
+          {children}
         </main>
       </div>
     </div>

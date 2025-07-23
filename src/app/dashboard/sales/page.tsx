@@ -19,7 +19,7 @@ import SalesSummary from "@/components/SalesSummary";
 // In a real app, this data would be fetched from the database
 const mockSales: any[] = [];
 
-export default function SalesPage({ store }: { store: any }) {
+export default function SalesPage() {
     const salesDataForAI = JSON.stringify(mockSales.map(s => ({
         productName: s.product,
         quantitySold: 1, // Mocking quantity

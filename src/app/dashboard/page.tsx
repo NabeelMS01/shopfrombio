@@ -7,6 +7,8 @@ import {
 } from "@/components/ui/card";
 import { DollarSign, ShoppingBag, Users } from "lucide-react";
 import dbConnect from "@/lib/mongoose";
+import { getUserFromSession } from "@/lib/session";
+import Store from "@/models/Store";
 
 // In a real app, you would fetch real data based on the store.
 async function getDashboardData(storeId: string) {
@@ -23,17 +25,22 @@ async function getDashboardData(storeId: string) {
   };
 }
 
-export default async function DashboardPage({ store }: { store: any }) {
-  // Debugging: Log the store prop
-  console.log("DashboardPage received store prop:", store);
+async function getStore(userId: string) {
+    await dbConnect();
+    const store = await Store.findOne({ userId }).lean();
+    return store ? JSON.parse(JSON.stringify(store)) : null;
+}
 
-  // Null check to prevent crash if store is not passed correctly
+export default async function DashboardPage() {
+  const user = await getUserFromSession();
+  const store = await getStore(user!._id);
+  
   if (!store) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Error</CardTitle>
-          <CardDescription>Could not load store data. Please try again later.</CardDescription>
+          <CardDescription>Could not load store data. Please create a store first.</CardDescription>
         </CardHeader>
       </Card>
     );

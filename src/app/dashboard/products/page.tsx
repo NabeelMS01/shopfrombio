@@ -1,5 +1,7 @@
 import dbConnect from "@/lib/mongoose";
 import Product from "@/models/Product";
+import Store from "@/models/Store";
+import { getUserFromSession } from "@/lib/session";
 import {
   Card,
   CardContent,
@@ -34,14 +36,22 @@ async function getProducts(storeId: string) {
   return JSON.parse(JSON.stringify(products));
 }
 
+async function getStore(userId: string) {
+    await dbConnect();
+    const store = await Store.findOne({ userId }).lean();
+    return store ? JSON.parse(JSON.stringify(store)) : null;
+}
 
-export default async function ProductsPage({ store }: {store: any}) {
+export default async function ProductsPage() {
+  const user = await getUserFromSession();
+  const store = await getStore(user!._id);
+  
   if (!store) {
     return (
       <Card>
           <CardHeader>
             <CardTitle>Error</CardTitle>
-            <CardDescription>Could not load store data. Please try again later.</CardDescription>
+            <CardDescription>Could not load store data. Please create a store first.</CardDescription>
           </CardHeader>
       </Card>
     );
@@ -50,7 +60,6 @@ export default async function ProductsPage({ store }: {store: any}) {
   const products = await getProducts(store._id);
   const storeCurrency = store.currency || 'USD';
   const currencySymbol = new Intl.NumberFormat('en-US', { style: 'currency', currency: storeCurrency }).formatToParts(0).find(p => p.type === 'currency')?.value || '$';
-
 
   return (
     <Card>
