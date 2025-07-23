@@ -18,8 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +26,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import AddProductDialog from "@/components/AddProductDialog";
+import ProductFormDialog from "@/components/ProductFormDialog";
 
 // This is a placeholder for getting the current user's ID
 async function getUserId() {
@@ -70,7 +69,7 @@ export default async function ProductsPage() {
               Manage your products and view their sales performance.
             </CardDescription>
           </div>
-          <AddProductDialog />
+          <ProductFormDialog />
         </div>
       </CardHeader>
       <CardContent>
@@ -118,15 +117,17 @@ export default async function ProductsPage() {
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
+                    <DropdownMenuTrigger>
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span className="sr-only">Toggle menu</span>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
+                      <ProductFormDialog product={product}>
+                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                           Edit
+                         </DropdownMenuItem>
+                      </ProductFormDialog>
                       <DropdownMenuItem>Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

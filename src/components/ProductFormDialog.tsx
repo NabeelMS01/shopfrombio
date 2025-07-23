@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useActionState, useEffect } from 'react';
+import { useState, useActionState, useEffect, useMemo } from 'react';
 import { useFormStatus } from 'react-dom';
 import { PlusCircle, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addProduct } from '@/app/actions/product';
+import { addProduct, updateProduct } from '@/app/actions/product';
 import { useToast } from '@/hooks/use-toast';
+
+type Product = {
+    _id: string;
+    title: string;
+    price: number;
+    cost?: number;
+    discount?: { value: number, type: 'percentage' | 'amount' };
+    stock: number;
+    productType: 'product' | 'service';
+    variants: Variant[];
+};
+
+type ProductFormDialogProps = {
+    product?: Product;
+    children?: React.ReactNode;
+};
 
 const initialState = {
   message: '',
@@ -25,11 +41,11 @@ const initialState = {
   success: false,
 };
 
-function SubmitButton() {
+function SubmitButton({ isEditMode }: { isEditMode: boolean }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" aria-disabled={pending}>
-      {pending ? 'Saving...' : 'Save Product'}
+      {pending ? (isEditMode ? 'Saving...' : 'Adding...') : (isEditMode ? 'Save Changes' : 'Add Product')}
     </Button>
   );
 }
@@ -37,23 +53,35 @@ function SubmitButton() {
 type VariantOption = { name: string; stock?: number };
 type Variant = { type: string; options: VariantOption[] };
 
-export default function AddProductDialog() {
+export default function ProductFormDialog({ product, children }: ProductFormDialogProps) {
   const [open, setOpen] = useState(false);
-  const [state, formAction] = useActionState(addProduct, initialState);
+  const isEditMode = !!product;
+
+  const formAction = isEditMode ? updateProduct : addProduct;
+  const [state, dispatchFormAction] = useActionState(formAction, initialState);
+
   const { toast } = useToast();
   
-  const [variants, setVariants] = useState<Variant[]>([]);
+  const [variants, setVariants] = useState<Variant[]>(product?.variants || []);
 
   useEffect(() => {
     if (state.success) {
       toast({ title: "Success", description: state.message });
       setOpen(false);
-      setVariants([]); // Reset variants on success
+      if (!isEditMode) {
+        setVariants([]); // Reset variants on success for add mode
+      }
     } else if (state.message && !state.success) {
       toast({ title: "Error", description: state.message, variant: 'destructive' });
     }
-  }, [state, toast]);
+  }, [state, toast, isEditMode]);
 
+  useEffect(() => {
+    if(open) {
+        setVariants(product?.variants || []);
+    }
+  }, [open, product]);
+  
   const handleAddVariant = () => {
     setVariants([...variants, { type: '', options: [{ name: '', stock: undefined }] }]);
   };
@@ -87,46 +115,52 @@ export default function AddProductDialog() {
     if (field === 'name') {
         option.name = value;
     } else {
-        // Allow empty string to clear the value, otherwise parse as number
         option.stock = value === '' ? undefined : Number(value);
     }
     setVariants(newVariants);
   };
 
+  const Trigger = children ? (
+    <DialogTrigger asChild>{children}</DialogTrigger>
+  ) : (
+    <DialogTrigger asChild>
+      <Button size="sm" className="gap-1">
+        <PlusCircle className="h-3.5 w-3.5" />
+        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+          Add Product
+        </span>
+      </Button>
+    </DialogTrigger>
+  );
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-1">
-          <PlusCircle className="h-3.5 w-3.5" />
-          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Add Product
-          </span>
-        </Button>
-      </DialogTrigger>
+      {Trigger}
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Product</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Product' : 'Add New Product'}</DialogTitle>
           <DialogDescription>
-            Fill in the details below to add a new product to your store.
+            {isEditMode ? 'Update the details of your product below.' : 'Fill in the details below to add a new product to your store.'}
           </DialogDescription>
         </DialogHeader>
-        <form action={formAction} className="space-y-6">
+        <form action={dispatchFormAction} className="space-y-6">
+          {isEditMode && <input type="hidden" name="productId" value={product._id} />}
           <input type="hidden" name="variants" value={JSON.stringify(variants.map(v => ({...v, options: v.options.map(o => ({...o, stock: o.stock === undefined ? null : o.stock}))})))} />
           <div className="space-y-4">
              <div>
                 <Label htmlFor="title">Product Title</Label>
-                <Input id="title" name="title" placeholder="e.g. Classic T-Shirt" />
+                <Input id="title" name="title" placeholder="e.g. Classic T-Shirt" defaultValue={product?.title} />
                 {state.errors?.title && <p className="text-sm text-destructive mt-1">{state.errors.title[0]}</p>}
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <Label htmlFor="price">Price</Label>
-                    <Input id="price" name="price" type="number" step="0.01" placeholder="e.g. 25.00" />
+                    <Input id="price" name="price" type="number" step="0.01" placeholder="e.g. 25.00" defaultValue={product?.price} />
                     {state.errors?.price && <p className="text-sm text-destructive mt-1">{state.errors.price[0]}</p>}
                 </div>
                  <div>
                     <Label htmlFor="cost">Cost (for profit margin)</Label>
-                    <Input id="cost" name="cost" type="number" step="0.01" placeholder="e.g. 10.00" />
+                    <Input id="cost" name="cost" type="number" step="0.01" placeholder="e.g. 10.00" defaultValue={product?.cost} />
                      {state.errors?.cost && <p className="text-sm text-destructive mt-1">{state.errors.cost[0]}</p>}
                 </div>
              </div>
@@ -134,8 +168,8 @@ export default function AddProductDialog() {
                  <div>
                     <Label>Discount</Label>
                     <div className="flex gap-2">
-                        <Input name="discountValue" type="number" step="0.01" placeholder="e.g. 5" />
-                        <Select name="discountType" defaultValue="percentage">
+                        <Input name="discountValue" type="number" step="0.01" placeholder="e.g. 5" defaultValue={product?.discount?.value} />
+                        <Select name="discountType" defaultValue={product?.discount?.type || "percentage"}>
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>
@@ -148,13 +182,13 @@ export default function AddProductDialog() {
                  </div>
                  <div>
                     <Label htmlFor="stock">Total Stock</Label>
-                    <Input id="stock" name="stock" type="number" placeholder="e.g. 100" />
+                    <Input id="stock" name="stock" type="number" placeholder="e.g. 100" defaultValue={product?.stock} />
                      {state.errors?.stock && <p className="text-sm text-destructive mt-1">{state.errors.stock[0]}</p>}
                 </div>
              </div>
              <div>
                 <Label>Product Type</Label>
-                <Select name="productType" defaultValue="product">
+                <Select name="productType" defaultValue={product?.productType || "product"}>
                     <SelectTrigger>
                         <SelectValue />
                     </SelectTrigger>
@@ -222,8 +256,8 @@ export default function AddProductDialog() {
              </div>
           </div>
           <DialogFooter>
-             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-             <SubmitButton />
+             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+             <SubmitButton isEditMode={isEditMode} />
           </DialogFooter>
         </form>
       </DialogContent>

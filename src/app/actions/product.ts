@@ -26,7 +26,7 @@ const variantSchema = z.object({
     options: z.array(variantOptionSchema).min(1, "At least one option is required for a variant."),
 });
 
-const addProductSchema = z.object({
+const productSchema = z.object({
   title: z.string().min(1, { message: 'Product title is required' }),
   price: z.coerce.number().min(0, { message: 'Price must be a positive number' }),
   cost: z.coerce.number().optional(),
@@ -38,7 +38,7 @@ const addProductSchema = z.object({
 });
 
 export async function addProduct(prevState: any, formData: FormData) {
-  const validatedFields = addProductSchema.safeParse(
+  const validatedFields = productSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
 
@@ -54,7 +54,6 @@ export async function addProduct(prevState: any, formData: FormData) {
   let variants = [];
   try {
       variants = JSON.parse(variantsJSON);
-      // Further validation on parsed variants
       z.array(variantSchema).parse(variants);
   } catch (e) {
       return { message: 'Invalid variant data format.' };
@@ -89,4 +88,64 @@ export async function addProduct(prevState: any, formData: FormData) {
     console.error(e);
     return { message: 'Something went wrong. Please try again.' };
   }
+}
+
+const updateProductSchema = productSchema.extend({
+    productId: z.string().min(1, { message: 'Product ID is required' }),
+});
+
+export async function updateProduct(prevState: any, formData: FormData) {
+    const validatedFields = updateProductSchema.safeParse(
+        Object.fromEntries(formData.entries())
+    );
+
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: 'Please correct the errors below.',
+        };
+    }
+
+    const { productId, title, price, cost, stock, productType, discountValue, discountType, variants: variantsJSON } = validatedFields.data;
+
+    let variants = [];
+    try {
+        variants = JSON.parse(variantsJSON);
+        z.array(variantSchema).parse(variants);
+    } catch (e) {
+        return { message: 'Invalid variant data format.' };
+    }
+
+    try {
+        await dbConnect();
+        const userId = await getUserId();
+        const store = await Store.findOne({ userId });
+
+        if (!store) {
+            return { message: 'Store not found for the current user.' };
+        }
+        
+        const productToUpdate = await Product.findOne({ _id: productId, storeId: store._id });
+
+        if (!productToUpdate) {
+            return { message: 'Product not found.' };
+        }
+
+        productToUpdate.title = title;
+        productToUpdate.price = price;
+        productToUpdate.cost = cost;
+        productToUpdate.stock = stock;
+        productToUpdate.productType = productType;
+        productToUpdate.variants = variants;
+        productToUpdate.discount = (discountValue && discountType) ? { value: discountValue, type: discountType } : undefined;
+
+        await productToUpdate.save();
+
+        revalidatePath('/dashboard/products');
+        return { success: true, message: 'Product updated successfully!' };
+
+    } catch (e: any) {
+        console.error(e);
+        return { message: 'Something went wrong. Please try again.' };
+    }
 }
