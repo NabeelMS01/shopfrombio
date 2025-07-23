@@ -51,12 +51,8 @@ export async function signup(prevState: any, formData: FormData) {
     return { message: 'Something went wrong. Please try again.' };
   }
 
-  const store = await Store.findOne({ userId: user._id });
-  if (store) {
-    redirect('/dashboard');
-  } else {
-    redirect('/dashboard/create-store');
-  }
+  // Always redirect to dashboard, assuming a store will be there or created implicitly.
+  redirect('/dashboard');
 }
 
 
@@ -97,11 +93,6 @@ export async function login(prevState: any, formData: FormData) {
     return { message: 'Something went wrong. Please try again.' };
   }
 
-  const store = await Store.findOne({ userId: user._id });
-
-  if (store) {
-      redirect('/dashboard');
-  } else {
-      redirect('/dashboard/create-store');
-  }
+  // Always redirect to dashboard.
+  redirect('/dashboard');
 }

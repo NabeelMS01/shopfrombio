@@ -6,7 +6,6 @@ import {
   BarChart3,
   Settings,
   PanelLeft,
-  Store,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -56,7 +55,7 @@ export default async function DashboardLayout({
             <span className="ml-2 text-foreground">ShopFromBio</span>
           </Link>
           
-          {store ? navLinks.map(link => (
+          {navLinks.map(link => (
             <Link
               key={link.href}
               href={link.href}
@@ -65,15 +64,7 @@ export default async function DashboardLayout({
               <link.icon className="h-4 w-4" />
               {link.label}
             </Link>
-          )) : (
-             <Link
-              href="/dashboard/create-store"
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-primary bg-muted transition-all hover:text-primary"
-            >
-              <Store className="h-4 w-4" />
-              Create Store
-            </Link>
-          )}
+          ))}
 
         </nav>
       </aside>
@@ -95,7 +86,7 @@ export default async function DashboardLayout({
                   <Briefcase className="h-5 w-5 transition-all group-hover:scale-110" />
                   <span className="sr-only">ShopFromBio</span>
                 </Link>
-                {store ? navLinks.map(link => (
+                {navLinks.map(link => (
                   <Link
                     key={link.href}
                     href={link.href}
@@ -104,15 +95,7 @@ export default async function DashboardLayout({
                     <link.icon className="h-5 w-5" />
                     {link.label}
                   </Link>
-                )) : (
-                  <Link
-                    href="/dashboard/create-store"
-                    className="flex items-center gap-4 px-2.5 text-foreground"
-                  >
-                    <Store className="h-5 w-5" />
-                    Create Store
-                  </Link>
-                )}
+                ))}
               </nav>
             </SheetContent>
           </Sheet>
