@@ -9,6 +9,7 @@ import StoreModel from "@/models/Store";
 import DashboardNav from "@/components/DashboardNav";
 import { getUserFromSession } from "@/lib/session";
 import { redirect } from "next/navigation";
+import CreateStorePage from "./create-store/page";
 
 async function getStore(userId: string) {
     if (!userId) return null;
@@ -29,18 +30,22 @@ export default async function DashboardLayout({
   }
   
   const store = await getStore(user._id);
-  
-  const childComponent = children as React.ReactElement;
-  const isCreateStorePage = (childComponent.type as any).name === 'CreateStorePage';
 
-  // If the user has no store, and they are not trying to access the create-store page,
-  // redirect them to the create-store page.
-  if (!store && !isCreateStorePage) {
-    redirect('/dashboard/create-store');
+  // If the user is authenticated but has no store, they must create one.
+  // The only page they can see is the create-store page.
+  if (!store) {
+    // We render the CreateStorePage directly, but within the dashboard's visual layout shell.
+    // The create store page itself won't have the full sidebar, this keeps the UI consistent.
+     return (
+        <div className="flex min-h-screen w-full flex-col bg-muted/40">
+            <CreateStorePage />
+        </div>
+     );
   }
   
-  // If a user has a store but tries to access the create page, redirect to dashboard
-  if(store && isCreateStorePage){
+  // If a user has a store but tries to access the create page manually, redirect them to the dashboard.
+  const childComponent = children as React.ReactElement;
+  if(store && (childComponent.type as any).name === 'CreateStorePage'){
     redirect('/dashboard');
   }
 

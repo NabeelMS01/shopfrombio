@@ -14,6 +14,7 @@ export default async function SettingsPage() {
     const user = await getUserFromSession();
 
     if (!user) {
+        // This check is a safeguard; middleware should prevent unauthenticated access.
         return (
             <Card>
                 <CardHeader>
@@ -27,6 +28,7 @@ export default async function SettingsPage() {
     const store = await getStore(user._id);
     
     if (!store) {
+        // This should be handled by the layout redirect, but as a safeguard.
         return (
             <Card>
                 <CardHeader>
