@@ -1,4 +1,3 @@
-
 import React from "react";
 import Link from "next/link";
 import {
@@ -25,8 +24,10 @@ async function getStore(userId: string) {
 
 export default async function DashboardLayout({
   children,
+  params
 }: {
   children: React.ReactNode;
+  params: any;
 }) {
   const user = await getUserFromSession();
   if (!user) {
@@ -36,12 +37,14 @@ export default async function DashboardLayout({
   const store = await getStore(user._id);
 
   if (!store) {
-    // If the user has no store, render the Create Store page directly.
-    // This prevents any child components that depend on `store` from crashing.
+    // If the user has no store, render the Create Store page directly
+    // within the context of the main layout, but don't render the dashboard itself.
     return <CreateStorePage />;
   }
   
-  // To pass store data to child server components, we can clone the element and add props.
+  // Pass store data to child server components via props.
+  // Next.js does this implicitly when pages are rendered inside a layout.
+  // We modify the children to inject the prop.
    const childrenWithProps = React.cloneElement(children as React.ReactElement, { store });
 
 

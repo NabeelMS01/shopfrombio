@@ -36,6 +36,17 @@ async function getProducts(storeId: string) {
 
 
 export default async function ProductsPage({ store }: {store: any}) {
+  if (!store) {
+    return (
+      <Card>
+          <CardHeader>
+            <CardTitle>Error</CardTitle>
+            <CardDescription>Could not load store data. Please try again later.</CardDescription>
+          </CardHeader>
+      </Card>
+    );
+  }
+
   const products = await getProducts(store._id);
   const storeCurrency = store.currency || 'USD';
   const currencySymbol = new Intl.NumberFormat('en-US', { style: 'currency', currency: storeCurrency }).formatToParts(0).find(p => p.type === 'currency')?.value || '$';
