@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { logout } from "@/app/actions/auth";
 
 export default function UserNav() {
   return (
@@ -40,11 +41,13 @@ export default function UserNav() {
           </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <Link href="/login">
-          <DropdownMenuItem>
-            Log out
+        <form action={logout}>
+          <DropdownMenuItem asChild>
+            <button type="submit" className="w-full text-left">
+              Log out
+            </button>
           </DropdownMenuItem>
-        </Link>
+        </form>
       </DropdownMenuContent>
     </DropdownMenu>
   );

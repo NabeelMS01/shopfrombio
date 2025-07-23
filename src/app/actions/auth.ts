@@ -5,8 +5,8 @@ import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
-import { signIn } from '@/lib/auth'; // Assuming you have authjs setup
-import Store from '@/models/Store';
+import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
 
 const signupSchema = z.object({
   firstName: z.string().min(1, { message: 'First name is required' }),
@@ -51,7 +51,18 @@ export async function signup(prevState: any, formData: FormData) {
     return { message: 'Something went wrong. Please try again.' };
   }
 
-  // Always redirect to dashboard, assuming a store will be there or created implicitly.
+  // Set session cookie
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, {
+    expiresIn: '7d',
+  });
+
+  cookies().set('session', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 7, // 1 week
+    path: '/',
+  });
+
   redirect('/dashboard');
 }
 
@@ -93,6 +104,23 @@ export async function login(prevState: any, formData: FormData) {
     return { message: 'Something went wrong. Please try again.' };
   }
 
-  // Always redirect to dashboard.
+  // Set session cookie
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, {
+    expiresIn: '7d',
+  });
+
+  cookies().set('session', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 7, // 1 week
+    path: '/',
+  });
+
   redirect('/dashboard');
+}
+
+
+export async function logout() {
+  cookies().delete('session');
+  redirect('/login');
 }
