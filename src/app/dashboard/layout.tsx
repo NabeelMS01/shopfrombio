@@ -25,6 +25,7 @@ export default async function DashboardLayout({
 }) {
   const user = await getUserFromSession();
   if (!user) {
+    // This is a fallback, middleware should already have redirected
     redirect('/login');
   }
   
