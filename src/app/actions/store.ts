@@ -4,19 +4,8 @@ import dbConnect from '@/lib/mongoose';
 import Store from '@/models/Store';
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
-
-// This is a placeholder for getting the current user's ID
-// In a real app, you'd get this from the session (e.g., NextAuth.js)
-async function getUserId() {
-    // For now, let's find a user to associate the store with.
-    // This is NOT secure and is for demonstration purposes only.
-    const User = (await import('@/models/User')).default;
-    await dbConnect();
-    const user = await User.findOne().sort({_id: -1}); // Get the latest user
-    if (!user) throw new Error("No user found to associate the store with.");
-    return user._id;
-}
-
+import { revalidatePath } from 'next/cache';
+import { getUserFromSession } from '@/lib/session';
 
 const createStoreSchema = z.object({
   name: z.string().min(1, { message: 'Store name is required' }),
@@ -25,6 +14,11 @@ const createStoreSchema = z.object({
 });
 
 export async function createStore(prevState: any, formData: FormData) {
+  const user = await getUserFromSession();
+  if (!user) {
+    return { message: 'You must be logged in to create a store.' };
+  }
+
   const validatedFields = createStoreSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
@@ -40,7 +34,6 @@ export async function createStore(prevState: any, formData: FormData) {
 
   try {
     await dbConnect();
-    const userId = await getUserId();
 
     const existingSubdomain = await Store.findOne({ subdomain });
     if(existingSubdomain) {
@@ -51,21 +44,19 @@ export async function createStore(prevState: any, formData: FormData) {
       name,
       subdomain,
       currency,
-      userId,
+      userId: user._id,
     });
-
+    
+    revalidatePath('/dashboard');
     return { ...prevState, success: true, message: 'Store created successfully!' };
 
   } catch (e: any) {
     console.error(e);
-    if (e.message.includes('No user found')) {
-      return { ...prevState, message: 'Could not create store: No user session found.' };
+    if (e.code === 11000) { // Catch duplicate key error for userId
+        return { ...prevState, message: 'A store already exists for this user.' };
     }
     return { ...prevState, message: 'Something went wrong. Please try again.' };
   }
-
-  // This redirect will now be handled on the client
-  // redirect('/dashboard');
 }
 
 const updateStoreSchema = z.object({
@@ -77,6 +68,11 @@ const updateStoreSchema = z.object({
 
 
 export async function updateStore(prevState: any, formData: FormData) {
+    const user = await getUserFromSession();
+    if (!user) {
+      return { message: 'You must be logged in to update store settings.' };
+    }
+
     const validatedFields = updateStoreSchema.safeParse(
         Object.fromEntries(formData.entries())
       );
@@ -92,14 +88,13 @@ export async function updateStore(prevState: any, formData: FormData) {
     
       try {
         await dbConnect();
-        const userId = await getUserId();
     
-        const store = await Store.findOne({ userId });
+        const store = await Store.findOne({ userId: user._id });
         if (!store) {
             return { message: "Store not found." };
         }
 
-        const existingSubdomain = await Store.findOne({ subdomain, userId: { $ne: userId } });
+        const existingSubdomain = await Store.findOne({ subdomain, userId: { $ne: user._id } });
         if(existingSubdomain) {
             return { message: 'Subdomain is already taken.' };
         }
@@ -111,7 +106,8 @@ export async function updateStore(prevState: any, formData: FormData) {
         
         await store.save();
 
-        return { message: 'Settings saved successfully!' };
+        revalidatePath('/dashboard/settings');
+        return { success: true, message: 'Settings saved successfully!' };
     
       } catch (e) {
         console.error(e);
