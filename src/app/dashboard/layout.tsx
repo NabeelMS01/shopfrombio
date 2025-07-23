@@ -1,11 +1,6 @@
 import Link from "next/link";
 import {
   Briefcase,
-  Home,
-  ShoppingBag,
-  BarChart3,
-  Settings,
-  PanelLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -15,13 +10,14 @@ import StoreModel from "@/models/Store";
 import DashboardNav from "@/components/DashboardNav";
 import { getUserFromSession } from "@/lib/session";
 import { redirect } from "next/navigation";
+import { PanelLeft } from "lucide-react";
 
 
 async function getStore(userId: string) {
     if (!userId) return null;
     await dbConnect();
     const store = await StoreModel.findOne({ userId }).lean();
-    return store;
+    return store ? JSON.parse(JSON.stringify(store)) : null;
 }
 
 export default async function DashboardLayout({
@@ -37,15 +33,14 @@ export default async function DashboardLayout({
   const store = await getStore(user._id);
 
   if (!store) {
-    // If the user has no store, they should be on the create-store page.
-    // We allow this page to render within the layout.
+    // If the user has no store, they must be on the create-store page.
+    // The create-store page is rendered directly and doesn't use this layout's children.
     const CreateStorePage = (await import('./create-store/page')).default;
-    return (
-        <div className="flex items-center justify-center min-h-screen">
-             <CreateStorePage />
-        </div>
-    );
+    return <CreateStorePage />;
   }
+  
+  // To pass store data to child server components, we can clone the element and add props.
+   const childrenWithProps = React.cloneElement(children as React.ReactElement, { store });
 
 
   return (
@@ -89,7 +84,7 @@ export default async function DashboardLayout({
           </div>
         </header>
         <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-          {children}
+          {childrenWithProps}
         </main>
       </div>
     </div>

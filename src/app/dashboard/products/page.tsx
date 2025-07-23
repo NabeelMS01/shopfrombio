@@ -1,6 +1,5 @@
 import dbConnect from "@/lib/mongoose";
 import Product from "@/models/Product";
-import Store from "@/models/Store";
 import {
   Card,
   CardContent,
@@ -28,34 +27,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import ProductFormDialog from "@/components/ProductFormDialog";
 
-// This is a placeholder for getting the current user's ID
-async function getUserId() {
-  const User = (await import('@/models/User')).default;
+async function getProducts(storeId: string) {
+  if (!storeId) return [];
   await dbConnect();
-  const user = await User.findOne().sort({_id: -1});
-  return user?._id;
+  const products = await Product.find({ storeId }).lean();
+  return JSON.parse(JSON.stringify(products));
 }
 
 
-async function getProducts() {
-  const userId = await getUserId();
-  if (!userId) return { products: [], storeCurrency: 'USD' };
-
-  await dbConnect();
-  const store = await Store.findOne({ userId }).lean();
-  if (!store) return { products: [], storeCurrency: 'USD' };
-
-  const products = await Product.find({ storeId: store._id }).lean();
-
-  return { 
-    products: JSON.parse(JSON.stringify(products)),
-    storeCurrency: store.currency || 'USD'
-  };
-}
-
-
-export default async function ProductsPage() {
-  const { products, storeCurrency } = await getProducts();
+export default async function ProductsPage({ store }: {store: any}) {
+  const products = await getProducts(store._id);
+  const storeCurrency = store.currency || 'USD';
   const currencySymbol = new Intl.NumberFormat('en-US', { style: 'currency', currency: storeCurrency }).formatToParts(0).find(p => p.type === 'currency')?.value || '$';
 
 

@@ -5,15 +5,17 @@ import Product from '@/models/Product';
 import Store from '@/models/Store';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { getUserFromSession } from '@/lib/session';
 
 // This is a placeholder for getting the current user's ID
 // In a real app, you'd get this from the session (e.g., NextAuth.js)
-async function getUserId() {
-    const User = (await import('@/models/User')).default;
+async function getStoreId() {
+    const user = await getUserFromSession();
+    if (!user) throw new Error("User not authenticated");
     await dbConnect();
-    const user = await User.findOne().sort({_id: -1});
-    if (!user) throw new Error("No user found to associate the store with.");
-    return user._id;
+    const store = await Store.findOne({ userId: user._id });
+    if (!store) throw new Error("No store found for the current user.");
+    return store._id;
 }
 
 const variantOptionSchema = z.object({
@@ -53,23 +55,20 @@ export async function addProduct(prevState: any, formData: FormData) {
   
   let variants = [];
   try {
-      variants = JSON.parse(variantsJSON);
-      z.array(variantSchema).parse(variants);
+      if (variantsJSON) {
+        variants = JSON.parse(variantsJSON);
+        z.array(variantSchema).parse(variants);
+      }
   } catch (e) {
       return { message: 'Invalid variant data format.' };
   }
 
   try {
     await dbConnect();
-    const userId = await getUserId();
-    const store = await Store.findOne({ userId });
-
-    if (!store) {
-      return { message: 'Store not found for the current user.' };
-    }
+    const storeId = await getStoreId();
 
     const newProduct = {
-      storeId: store._id,
+      storeId: storeId,
       title,
       price,
       cost,
@@ -110,22 +109,19 @@ export async function updateProduct(prevState: any, formData: FormData) {
 
     let variants = [];
     try {
-        variants = JSON.parse(variantsJSON);
-        z.array(variantSchema).parse(variants);
+        if (variantsJSON) {
+            variants = JSON.parse(variantsJSON);
+            z.array(variantSchema).parse(variants);
+        }
     } catch (e) {
         return { message: 'Invalid variant data format.' };
     }
 
     try {
         await dbConnect();
-        const userId = await getUserId();
-        const store = await Store.findOne({ userId });
-
-        if (!store) {
-            return { message: 'Store not found for the current user.' };
-        }
+        const storeId = await getStoreId();
         
-        const productToUpdate = await Product.findOne({ _id: productId, storeId: store._id });
+        const productToUpdate = await Product.findOne({ _id: productId, storeId: storeId });
 
         if (!productToUpdate) {
             return { message: 'Product not found.' };
