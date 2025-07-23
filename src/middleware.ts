@@ -13,52 +13,33 @@ export const config = {
   ],
 };
 
-// Function to get the main domain from a hostname
-function getDomain(host: string) {
-    // Split the host by dots
-    const parts = host.split('.');
-    
-    // For local development like 'localhost:9002', return the full host
-    if (parts.length <= 1 || parts[parts.length-1] === 'localhost') {
-        return host;
-    }
-    
-    // For production domains like 'sub.example.com', return 'example.com'
-    // This assumes a standard TLD like .com, .org, etc.
-    if (parts.length > 2) {
-        return parts.slice(-2).join('.');
-    }
-    
-    return host;
-}
-
-
 export default function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const path = url.pathname;
   const sessionCookie = req.cookies.get('session');
 
-  // Protect dashboard routes
+  // 1. Protect dashboard routes
   if (path.startsWith('/dashboard') && !sessionCookie) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  // Redirect logged-in users from auth pages
+  // 2. Redirect logged-in users from auth pages
   if (sessionCookie && (path === '/login' || path === '/signup')) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
-
-  // Handle subdomains
+  
+  // 3. Handle subdomains
   const host = req.headers.get('host')!;
-  const appDomain = getDomain(host);
+  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:9002';
   
-  // Don't rewrite for the main app's public pages or dashboard
-  if (host === appDomain) {
-      return NextResponse.next();
+  // Don't rewrite requests to the root page, login, or signup
+  if (host === appDomain && (path === '/' || path === '/login' || path === '/signup' || path.startsWith('/dashboard'))) {
+    return NextResponse.next();
   }
-  
-  const subdomain = host.replace(`.${appDomain}`, '');
-  if (subdomain !== host) {
+
+  // Check if it's a subdomain
+  if (host !== appDomain && host.endsWith(appDomain)) {
+      const subdomain = host.replace(`.${appDomain}`, '');
       return NextResponse.rewrite(new URL(`/${subdomain}${path}`, req.url));
   }
 
