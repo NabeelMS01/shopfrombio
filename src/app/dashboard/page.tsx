@@ -24,6 +24,21 @@ async function getDashboardData(storeId: string) {
 }
 
 export default async function DashboardPage({ store }: { store: any }) {
+  // Debugging: Log the store prop
+  console.log("DashboardPage received store prop:", store);
+
+  // Null check to prevent crash if store is not passed correctly
+  if (!store) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Error</CardTitle>
+          <CardDescription>Could not load store data. Please try again later.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   const data = await getDashboardData(store._id);
   
   const storeName = store.name || "Your Store";
