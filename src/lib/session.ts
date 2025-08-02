@@ -2,11 +2,10 @@ import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import dbConnect from './mongoose';
 import User, { IUser } from '@/models/User';
-import { cache } from 'react';
 
 // Using React's cache to deduplicate requests within a single render pass.
-export const getUserFromSession = cache(async () => {
-    const sessionCookie =   (await cookies()).get('session')?.value;
+export const getUserFromSession = async () => {
+    const sessionCookie =   cookies().get('session')?.value;
     if (!sessionCookie) {
         return null;
     }
@@ -38,4 +37,4 @@ export const getUserFromSession = cache(async () => {
         console.error("Session verification failed:", error);
         return null;
     }
-});
+};

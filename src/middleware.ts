@@ -30,15 +30,15 @@ export default function middleware(req: NextRequest) {
   
   // 3. Handle subdomains
   const host = req.headers.get('host')!;
-  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:9002';
+  const appDomain = process.env.APP_DOMAIN || 'localhost:9002';
   
-  // Don't rewrite requests to the root page, login, or signup
-  if (host === appDomain && (path === '/' || path === '/login' || path === '/signup' || path.startsWith('/dashboard'))) {
+  // Don't rewrite requests for the main app domain, dashboard, or auth pages.
+  if (host === appDomain || path.startsWith('/dashboard') || path === '/login' || path === '/signup') {
     return NextResponse.next();
   }
 
-  // Check if it's a subdomain
-  if (host !== appDomain && host.endsWith(appDomain)) {
+  // Check if it's a subdomain and rewrite
+  if (host.endsWith(appDomain)) {
       const subdomain = host.replace(`.${appDomain}`, '');
       return NextResponse.rewrite(new URL(`/${subdomain}${path}`, req.url));
   }

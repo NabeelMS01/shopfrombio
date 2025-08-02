@@ -1,4 +1,4 @@
-import React from "react";
+import React, { cache } from "react";
 import Link from "next/link";
 import { Briefcase, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,12 @@ import { getUserFromSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import CreateStorePage from "./create-store/page";
 
-async function getStore(userId: string) {
+const getStore = cache(async (userId: string) => {
     if (!userId) return null;
     await dbConnect();
     const store = await StoreModel.findOne({ userId }).lean();
     return store ? JSON.parse(JSON.stringify(store)) : null;
-}
+});
 
 export default async function DashboardLayout({
   children,
@@ -30,12 +30,20 @@ export default async function DashboardLayout({
   }
   
   const store = await getStore(user._id);
+  const childComponent = children as React.ReactElement;
+  const isCreateStorePage = (childComponent.type as any).name === 'CreateStorePage';
+
+  if (!store && !isCreateStorePage) {
+    redirect('/dashboard/create-store');
+  }
+
+  if (store && isCreateStorePage) {
+    redirect('/dashboard');
+  }
 
   // If the user is authenticated but has no store, they must create one.
-  // The only page they can see is the create-store page.
+  // We only render the create store page in this case.
   if (!store) {
-    // We render the CreateStorePage directly, but within the dashboard's visual layout shell.
-    // The create store page itself won't have the full sidebar, this keeps the UI consistent.
      return (
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
             <CreateStorePage />
@@ -43,12 +51,6 @@ export default async function DashboardLayout({
      );
   }
   
-  // If a user has a store but tries to access the create page manually, redirect them to the dashboard.
-  const childComponent = children as React.ReactElement;
-  if(store && (childComponent.type as any).name === 'CreateStorePage'){
-    redirect('/dashboard');
-  }
-
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background sm:flex">
