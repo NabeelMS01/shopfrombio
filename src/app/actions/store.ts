@@ -91,7 +91,7 @@ export async function updateStore(prevState: any, formData: FormData) {
     
         const store = await Store.findOne({ userId: user._id });
         if (!store) {
-            return { message: "Store not found." };
+            return { message: "Store not found. You must create a store first." };
         }
 
         const existingSubdomain = await Store.findOne({ subdomain, userId: { $ne: user._id } });

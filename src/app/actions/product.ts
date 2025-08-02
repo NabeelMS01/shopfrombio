@@ -7,14 +7,12 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getUserFromSession } from '@/lib/session';
 
-// This is a placeholder for getting the current user's ID
-// In a real app, you'd get this from the session (e.g., NextAuth.js)
 async function getStoreId() {
     const user = await getUserFromSession();
-    if (!user) throw new Error("User not authenticated");
+    if (!user) return null;
     await dbConnect();
     const store = await Store.findOne({ userId: user._id });
-    if (!store) throw new Error("No store found for the current user.");
+    if (!store) return null;
     return store._id;
 }
 
@@ -40,6 +38,11 @@ const productSchema = z.object({
 });
 
 export async function addProduct(prevState: any, formData: FormData) {
+  const storeId = await getStoreId();
+  if (!storeId) {
+    return { message: 'You must be logged in and have a store to add a product.' };
+  }
+
   const validatedFields = productSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
@@ -65,7 +68,6 @@ export async function addProduct(prevState: any, formData: FormData) {
 
   try {
     await dbConnect();
-    const storeId = await getStoreId();
 
     const newProduct = {
       storeId: storeId,
@@ -94,6 +96,11 @@ const updateProductSchema = productSchema.extend({
 });
 
 export async function updateProduct(prevState: any, formData: FormData) {
+    const storeId = await getStoreId();
+    if (!storeId) {
+        return { message: 'You must be logged in and have a store to update a product.' };
+    }
+
     const validatedFields = updateProductSchema.safeParse(
         Object.fromEntries(formData.entries())
     );
@@ -119,12 +126,11 @@ export async function updateProduct(prevState: any, formData: FormData) {
 
     try {
         await dbConnect();
-        const storeId = await getStoreId();
         
         const productToUpdate = await Product.findOne({ _id: productId, storeId: storeId });
 
         if (!productToUpdate) {
-            return { message: 'Product not found.' };
+            return { message: 'Product not found or you do not have permission to edit it.' };
         }
 
         productToUpdate.title = title;
