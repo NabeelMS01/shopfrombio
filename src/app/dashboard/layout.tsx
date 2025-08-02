@@ -1,4 +1,4 @@
-import React, { cache } from "react";
+import React from "react";
 import Link from "next/link";
 import { Briefcase, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,12 @@ import { getUserFromSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import CreateStorePage from "./create-store/page";
 
-const getStore = cache(async (userId: string) => {
+async function getStore(userId: string) {
     if (!userId) return null;
     await dbConnect();
     const store = await StoreModel.findOne({ userId }).lean();
     return store ? JSON.parse(JSON.stringify(store)) : null;
-});
+}
 
 export default async function DashboardLayout({
   children,
@@ -30,8 +30,10 @@ export default async function DashboardLayout({
   }
   
   const store = await getStore(user._id);
-  const childComponent = children as React.ReactElement;
-  const isCreateStorePage = (childComponent.type as any).name === 'CreateStorePage';
+  
+  // This is a way to check the type of the child component being rendered.
+  // It's not the most robust method, but it works for this use case.
+  const isCreateStorePage = (children as React.ReactElement).type === CreateStorePage;
 
   if (!store && !isCreateStorePage) {
     redirect('/dashboard/create-store');
