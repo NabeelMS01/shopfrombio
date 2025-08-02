@@ -5,7 +5,7 @@ import User, { IUser } from '@/models/User';
 
 // Using React's cache to deduplicate requests within a single render pass.
 export const getUserFromSession = async () => {
-    const sessionCookie =   cookies().get('session')?.value;
+    const sessionCookie =   (await cookies()).get('session')?.value;
     if (!sessionCookie) {
         return null;
     }
