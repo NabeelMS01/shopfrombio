@@ -33,11 +33,13 @@ export default function middleware(req: NextRequest) {
   const appDomain = process.env.APP_DOMAIN || 'localhost:9002';
   
   // Don't rewrite requests for the main app domain, dashboard, or auth pages.
+  // This check is important to prevent rewrite loops and incorrect path handling.
   if (host === appDomain || path.startsWith('/dashboard') || path === '/login' || path === '/signup') {
     return NextResponse.next();
   }
 
   // Check if it's a subdomain and rewrite
+  // This ensures that `mystore.localhost:9002` becomes `/mystore`
   if (host.endsWith(appDomain)) {
       const subdomain = host.replace(`.${appDomain}`, '');
       return NextResponse.rewrite(new URL(`/${subdomain}${path}`, req.url));
