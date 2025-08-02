@@ -6,7 +6,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import UserNav from "@/components/UserNav";
 import dbConnect from "@/lib/mongoose";
 import StoreModel from "@/models/Store";
-import UserModel, { IUser } from "@/models/User";
 import DashboardNav from "@/components/DashboardNav";
 import { getUserFromSession } from "@/lib/session";
 import { redirect } from "next/navigation";
