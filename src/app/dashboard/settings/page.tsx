@@ -3,8 +3,10 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import dbConnect from "@/lib/mongoose";
 import { getUserFromSession } from "@/lib/session";
 import Store from "@/models/Store";
+import { redirect } from "next/navigation";
 
 async function getStore(userId: string) {
+    if (!userId) return null;
     await dbConnect();
     const store = await Store.findOne({ userId }).lean();
     return store ? JSON.parse(JSON.stringify(store)) : null;
@@ -14,15 +16,7 @@ export default async function SettingsPage() {
     const user = await getUserFromSession();
 
     if (!user) {
-        // This check is a safeguard; middleware should prevent unauthenticated access.
-        return (
-            <Card>
-                <CardHeader>
-                  <CardTitle>Authentication Error</CardTitle>
-                  <CardDescription>Could not retrieve user session. Please log in again.</CardDescription>
-                </CardHeader>
-            </Card>
-        );
+        redirect('/login');
     }
 
     const store = await getStore(user._id);
@@ -33,7 +27,7 @@ export default async function SettingsPage() {
             <Card>
                 <CardHeader>
                   <CardTitle>Error</CardTitle>
-                  <CardDescription>Could not load store data. Please create a store first.</CardDescription>
+                  <CardDescription>Could not load store data. Ensure a store is created.</CardDescription>
                 </CardHeader>
             </Card>
         )

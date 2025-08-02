@@ -9,9 +9,17 @@ import { DollarSign, ShoppingBag, Users } from "lucide-react";
 import dbConnect from "@/lib/mongoose";
 import { getUserFromSession } from "@/lib/session";
 import Store from "@/models/Store";
+import { redirect } from "next/navigation";
 
 // In a real app, you would fetch real data based on the store.
 async function getDashboardData(storeId: string) {
+  if (!storeId) {
+    return {
+        totalRevenue: 0,
+        salesCount: 0,
+        productCount: 0,
+    }
+  }
   await dbConnect();
   
   // const totalRevenue = await Order.aggregate([...]);
@@ -26,6 +34,7 @@ async function getDashboardData(storeId: string) {
 }
 
 async function getStore(userId: string) {
+    if (!userId) return null;
     await dbConnect();
     const store = await Store.findOne({ userId }).lean();
     return store ? JSON.parse(JSON.stringify(store)) : null;
@@ -35,15 +44,7 @@ export default async function DashboardPage() {
   const user = await getUserFromSession();
 
   if (!user) {
-    // This should ideally be handled by middleware, but as a fallback
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Authentication Error</CardTitle>
-          <CardDescription>Could not retrieve user session. Please log in again.</CardDescription>
-        </CardHeader>
-      </Card>
-    );
+    redirect('/login');
   }
 
   const store = await getStore(user._id);
@@ -54,7 +55,7 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Error</CardTitle>
-          <CardDescription>Could not load store data. Please create a store first.</CardDescription>
+          <CardDescription>Could not load store data. Ensure a store is created.</CardDescription>
         </CardHeader>
       </Card>
     );

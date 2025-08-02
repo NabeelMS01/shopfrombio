@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ProductFormDialog from "@/components/ProductFormDialog";
+import { redirect } from "next/navigation";
 
 async function getProducts(storeId: string) {
   if (!storeId) return [];
@@ -37,6 +38,7 @@ async function getProducts(storeId: string) {
 }
 
 async function getStore(userId: string) {
+    if (!userId) return null;
     await dbConnect();
     const store = await Store.findOne({ userId }).lean();
     return store ? JSON.parse(JSON.stringify(store)) : null;
@@ -46,24 +48,18 @@ export default async function ProductsPage() {
   const user = await getUserFromSession();
   
   if (!user) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Authentication Error</CardTitle>
-          <CardDescription>Could not retrieve user session. Please log in again.</CardDescription>
-        </CardHeader>
-      </Card>
-    );
+    redirect('/login');
   }
 
   const store = await getStore(user._id);
   
   if (!store) {
+    // This case should be handled by the layout redirecting to create-store, but as a safeguard.
     return (
       <Card>
           <CardHeader>
             <CardTitle>Error</CardTitle>
-            <CardDescription>Could not load store data. Please create a store first.</CardDescription>
+            <CardDescription>Could not load store data. Ensure a store is created.</CardDescription>
           </CardHeader>
       </Card>
     );

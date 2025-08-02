@@ -24,7 +24,6 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await getUserFromSession();
-  // Middleware should handle this, but as a safeguard.
   if (!user) {
     redirect('/login');
   }
@@ -48,7 +47,7 @@ export default async function DashboardLayout({
   if (!store) {
      return (
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
-            <CreateStorePage />
+            {children}
         </div>
      );
   }
