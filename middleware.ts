@@ -5,37 +5,29 @@ export const config = {
 };
 
 export default function middleware(req: NextRequest) {
-  const url = req.nextUrl;
-  const path = url.pathname;
+  const hostName = (req.headers.get('host') || '').split(':')[0];
+  const path = req.nextUrl.pathname;
 
-  // Normalize hostname (ignore port)
-  const rawHost = req.headers.get('host') || '';
-  const hostName = rawHost.split(':')[0];
+  // PROD: *.shopfrombio.vercel.app → /[subdomain]
+  const root = process.env.APP_ROOT_DOMAIN;
+  if (root) {
+    const isProdSub = hostName.endsWith(`.${root}`) && hostName !== root;
+    if (isProdSub) {
+      const sub = hostName.slice(0, -(root.length + 1));
+      if (!path.startsWith(`/${sub}`)) {
+        return NextResponse.rewrite(new URL(`/${sub}${path}`, req.url));
+      }
+    }
+  }
 
-  // DEV subdomain support: *.localhost and *.lvh.me
-  const isDevSubdomain = (hostName.endsWith('.localhost') && hostName !== 'localhost') ||
-                         (hostName.endsWith('.lvh.me') && hostName !== 'lvh.me');
-
-  if (isDevSubdomain) {
+  // DEV: *.localhost / *.lvh.me → /[subdomain]
+  const isDevSub = (hostName.endsWith('.localhost') && hostName !== 'localhost')
+                || (hostName.endsWith('.lvh.me') && hostName !== 'lvh.me');
+  if (isDevSub) {
     const sub = hostName.split('.')[0];
-
-    // Skip framework/assets/api
-    if (
-      path.startsWith('/_next') ||
-      path.startsWith('/api') ||
-      path.startsWith('/_static') ||
-      /\.[\w]+$/.test(path)
-    ) {
-      return NextResponse.next();
+    if (!path.startsWith(`/${sub}`)) {
+      return NextResponse.rewrite(new URL(`/${sub}${path}`, req.url));
     }
-
-    // Already routed under /{sub}
-    if (path === `/${sub}` || path.startsWith(`/${sub}/`)) {
-      return NextResponse.next();
-    }
-
-    // Rewrite to /{sub}{path}
-    return NextResponse.rewrite(new URL(`/${sub}${path}`, req.url));
   }
 
   return NextResponse.next();
