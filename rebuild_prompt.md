@@ -21,7 +21,7 @@ Follow up with: "Use the 'Default' style and 'Neutral' base color. Confirm the d
 
 ## 4. Subdomain Store Functionality
 
-"Implement the core multi-tenancy feature. First, create a `middleware.ts` file at the project root. This middleware will rewrite requests from `subdomain.localhost:9002` to `/[subdomain]`. Ensure it reads the application's domain from an environment variable."
+"Implement the core multi-tenancy feature. First, create a `middleware.ts` file at the project root. This middleware will rewrite requests from `subdomain.localhost:3000` to `/[subdomain]`. Ensure it reads the application's domain from an environment variable."
 
 "Next, create the dynamic store page at `src/app/[subdomain]/page.tsx`. This page should display the store's name and a grid of its products. Use mock data to represent at least two different stores with a few products each, including product name, price, and a placeholder image."
 

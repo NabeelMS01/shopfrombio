@@ -1,26 +1,24 @@
-import type {NextConfig} from 'next';
 import { config } from 'dotenv';
 
 config({ path: './.env' });
 
-const nextConfig: NextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
+const nextConfig = {
+ 
+  experimental: {
+    allowedDevOrigins : [
+      'http://*.localhost:3000',
+      'http://*.lvh.me:3000',
+    ],
   },
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
+      { protocol: 'https', hostname: 'placehold.co', port: '', pathname: '/**' },
+      { protocol: 'https', hostname: 'utfs.io', port: '', pathname: '/**' },
     ],
   },
+  reactStrictMode: false,
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
 };
 
 export default nextConfig;

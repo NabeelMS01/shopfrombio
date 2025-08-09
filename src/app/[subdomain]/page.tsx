@@ -1,22 +1,37 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
-import dbConnect from "@/lib/mongoose";
-import Store from "@/models/Store";
-import Product from "@/models/Product";
+import { supabase } from "@/lib/supabase";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import ProductCard from "@/components/ProductCard";
 
 async function getStore(subdomain: string) {
-  await dbConnect();
-  const store = await Store.findOne({ subdomain }).lean();
+  // Get store by subdomain
+  const { data: store } = await supabase
+    .from('stores')
+    .select('*')
+    .eq('subdomain', subdomain)
+    .single();
+    
   if (!store) {
     return null;
   }
-  const products = await Product.find({ storeId: store._id }).lean();
   
-  return { ...store, products: JSON.parse(JSON.stringify(products)) };
+  // Get products for this store
+  const { data: products } = await supabase
+    .from('products')
+    .select(`
+      *,
+      product_variants (
+        variant_type,
+        variant_name,
+        stock
+      )
+    `)
+    .eq('store_id', store.id);
+  
+  return { ...store, products: products || [] };
 }
 
 type StorePageParams = {
@@ -52,7 +67,7 @@ export default async function StorePage({ params }: StorePageParams) {
                 {store.products.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     {store.products.map((product: any) => (
-                        <ProductCard key={product._id} product={product} currencySymbol={currencySymbol} />
+                        <ProductCard key={product.id} product={product} currencySymbol={currencySymbol} />
                     ))}
                 </div>
                 ) : (

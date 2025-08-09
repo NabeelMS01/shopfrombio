@@ -1,12 +1,20 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Briefcase, Zap, Palette } from "lucide-react";
-import Header from "@/components/Header";
+import ClientHeader from "@/components/ClientHeader";
 
-export default function HomePage() {
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
+export default async function HomePage() {
+  // If the request is for a subdomain host (like foo.localhost), redirect to /[subdomain]
+  const host = (await headers()).get('host') || '';
+  const hostName = host.split(':')[0];
+
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
+      <ClientHeader />
       <main className="flex-1">
         <section className="w-full py-20 md:py-32 lg:py-40 bg-background">
           <div className="container px-4 md:px-6">

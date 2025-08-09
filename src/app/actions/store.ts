@@ -1,7 +1,6 @@
 'use server';
 
-import dbConnect from '@/lib/mongoose';
-import Store from '@/models/Store';
+import { storeModel } from '@/lib/models';
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
@@ -33,28 +32,25 @@ export async function createStore(prevState: any, formData: FormData) {
   const { name, subdomain, currency } = validatedFields.data;
 
   try {
-    await dbConnect();
-
-    const existingSubdomain = await Store.findOne({ subdomain });
-    if(existingSubdomain) {
-        return { ...prevState, message: 'Subdomain is already taken.' };
+    // Check if subdomain already exists
+    const exists = await storeModel.subdomainExists(subdomain);
+    if (exists) {
+      return { ...prevState, message: 'Subdomain is already taken.' };
     }
 
-    await Store.create({
+    // Create new store
+    await storeModel.create({
       name,
       subdomain,
       currency,
-      userId: user._id,
+      user_id: user.id,
     });
     
     revalidatePath('/dashboard');
-    return { ...prevState, success: true, message: 'Store created successfully!' };
+    return { success: true, message: 'Store created successfully!', redirect: '/dashboard' };
 
   } catch (e: any) {
     console.error(e);
-    if (e.code === 11000) { // Catch duplicate key error for userId
-        return { ...prevState, message: 'A store already exists for this user.' };
-    }
     return { ...prevState, message: 'Something went wrong. Please try again.' };
   }
 }
@@ -87,24 +83,25 @@ export async function updateStore(prevState: any, formData: FormData) {
       const { name, subdomain, razorpayKeyId, theme } = validatedFields.data;
     
       try {
-        await dbConnect();
-    
-        const store = await Store.findOne({ userId: user._id });
+        // Get current store
+        const store = await storeModel.getByUserId(user.id);
         if (!store) {
-            return { message: "Store not found. You must create a store first." };
+          return { message: "Store not found. You must create a store first." };
         }
 
-        const existingSubdomain = await Store.findOne({ subdomain, userId: { $ne: user._id } });
-        if(existingSubdomain) {
-            return { message: 'Subdomain is already taken.' };
+        // Check if subdomain is taken by another user
+        const exists = await storeModel.subdomainExistsForOtherUser(subdomain, user.id);
+        if (exists) {
+          return { message: 'Subdomain is already taken.' };
         }
-    
-        store.name = name;
-        store.subdomain = subdomain;
-        store.razorpayKeyId = razorpayKeyId;
-        store.theme = theme;
-        
-        await store.save();
+
+        // Update store
+        await storeModel.updateSettings(store.id, {
+          name,
+          subdomain,
+          razorpay_key_id: razorpayKeyId,
+          theme,
+        });
 
         revalidatePath('/dashboard/settings');
         return { success: true, message: 'Settings saved successfully!' };

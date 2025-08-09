@@ -17,10 +17,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { addProduct, updateProduct } from '@/app/actions/product';
+import UploadImageField from '@/components/UploadImageField';
 import { useToast } from '@/hooks/use-toast';
 
 type Product = {
-    _id: string;
+    id: string;
     title: string;
     price: number;
     cost?: number;
@@ -33,9 +34,11 @@ type Product = {
 type ProductFormDialogProps = {
     product?: Product;
     children?: React.ReactNode;
+    triggerType?: 'button' | 'dropdownItem';
+    triggerLabel?: string;
 };
 
-const initialState = {
+const initialState: any = {
   message: '',
   errors: {},
   success: false,
@@ -53,7 +56,7 @@ function SubmitButton({ isEditMode }: { isEditMode: boolean }) {
 type VariantOption = { name: string; stock?: number };
 type Variant = { type: string; options: VariantOption[] };
 
-export default function ProductFormDialog({ product, children }: ProductFormDialogProps) {
+export default function ProductFormDialog({ product, children, triggerType = 'button', triggerLabel }: ProductFormDialogProps) {
   const [open, setOpen] = useState(false);
   const isEditMode = !!product;
 
@@ -62,7 +65,7 @@ export default function ProductFormDialog({ product, children }: ProductFormDial
 
   const { toast } = useToast();
   
-  const [variants, setVariants] = useState<Variant[]>(product?.variants || []);
+  const [variants, setVariants] = useState<Variant[]>([]);
 
   useEffect(() => {
     if (state.success) {
@@ -80,7 +83,7 @@ export default function ProductFormDialog({ product, children }: ProductFormDial
     if(open) {
         setVariants(product?.variants || []);
     }
-  }, [open, product]);
+  }, [open, product?.variants]);
   
   const handleAddVariant = () => {
     setVariants([...variants, { type: '', options: [{ name: '', stock: undefined }] }]);
@@ -120,18 +123,31 @@ export default function ProductFormDialog({ product, children }: ProductFormDial
     setVariants(newVariants);
   };
 
-  const Trigger = children ? (
-    <DialogTrigger asChild>{children}</DialogTrigger>
-  ) : (
-    <DialogTrigger asChild>
-      <Button size="sm" className="gap-1">
-        <PlusCircle className="h-3.5 w-3.5" />
-        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-          Add Product
-        </span>
-      </Button>
-    </DialogTrigger>
-  );
+  let Trigger: React.ReactNode = null;
+  if (children) {
+    // If children are provided, assume they are client components and wrap as trigger
+    Trigger = <DialogTrigger asChild>{children}</DialogTrigger>;
+  } else if (triggerType === 'dropdownItem') {
+    // Render a button instead of passing a DropdownMenuItem directly (avoids onSelect leakage)
+    Trigger = (
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          {triggerLabel || (isEditMode ? 'Edit' : 'Add Product')}
+        </Button>
+      </DialogTrigger>
+    );
+  } else {
+    Trigger = (
+      <DialogTrigger asChild>
+        <Button size="sm" className="gap-1">
+          <PlusCircle className="h-3.5 w-3.5" />
+          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+            {triggerLabel || 'Add Product'}
+          </span>
+        </Button>
+      </DialogTrigger>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -144,7 +160,7 @@ export default function ProductFormDialog({ product, children }: ProductFormDial
           </DialogDescription>
         </DialogHeader>
         <form action={dispatchFormAction} className="space-y-6">
-          {isEditMode && <input type="hidden" name="productId" value={product._id} />}
+          {isEditMode && <input type="hidden" name="productId" value={product.id} />}
           <input type="hidden" name="variants" value={JSON.stringify(variants.map(v => ({...v, options: v.options.map(o => ({...o, stock: o.stock === undefined ? null : o.stock}))})))} />
           <div className="space-y-4">
              <div>
@@ -186,21 +202,29 @@ export default function ProductFormDialog({ product, children }: ProductFormDial
                      {state.errors?.stock && <p className="text-sm text-destructive mt-1">{state.errors.stock[0]}</p>}
                 </div>
              </div>
-             <div>
-                <Label>Product Type</Label>
-                <Select name="productType" defaultValue={product?.productType || "product"}>
-                    <SelectTrigger>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="product">Physical Product</SelectItem>
-                        <SelectItem value="service">Service</SelectItem>
-                    </SelectContent>
-                </Select>
-                 {state.errors?.productType && <p className="text-sm text-destructive mt-1">{state.errors.productType[0]}</p>}
-             </div>
+                           <div>
+                 <Label>Product Type</Label>
+                 <Select name="productType" defaultValue={product?.productType || "product"}>
+                     <SelectTrigger>
+                         <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                         <SelectItem value="product">Physical Product</SelectItem>
+                         <SelectItem value="service">Service</SelectItem>
+                     </SelectContent>
+                 </Select>
+                  {state.errors?.productType && <p className="text-sm text-destructive mt-1">{state.errors.productType[0]}</p>}
+              </div>
 
-             <div className="space-y-4">
+              <div>
+                 <Label>Images</Label>
+                 <div className="mt-2">
+                   {/* UploadThing multiple uploads */}
+                   <UploadImageField name="images" />
+                 </div>
+              </div>
+
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <Label>Variants</Label>
                     <Button type="button" variant="outline" size="sm" onClick={handleAddVariant}>

@@ -3,7 +3,7 @@
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
 type Product = {
-    _id: string;
+    id: string;
     title: string;
     price: number;
     images?: string[];
@@ -51,10 +51,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     const addItem = (product: Product, quantity = 1) => {
         setItems(prevItems => {
-            const existingItem = prevItems.find(item => item._id === product._id);
+            const existingItem = prevItems.find(item => item.id === product.id);
             if (existingItem) {
                 return prevItems.map(item =>
-                    item._id === product._id
+                    item.id === product.id
                         ? { ...item, quantity: item.quantity + quantity }
                         : item
                 );
@@ -65,7 +65,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
 
     const removeItem = (productId: string) => {
-        setItems(prevItems => prevItems.filter(item => item._id !== productId));
+        setItems(prevItems => prevItems.filter(item => item.id !== productId));
     };
 
     const updateItemQuantity = (productId: string, quantity: number) => {
@@ -74,7 +74,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         } else {
             setItems(prevItems =>
                 prevItems.map(item =>
-                    item._id === productId ? { ...item, quantity } : item
+                    item.id === productId ? { ...item, quantity } : item
                 )
             );
         }

@@ -1,8 +1,6 @@
 'use server';
 
-import dbConnect from '@/lib/mongoose';
-import Product from '@/models/Product';
-import Store from '@/models/Store';
+import { productModel, storeModel } from '@/lib/models';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getUserFromSession } from '@/lib/session';
@@ -10,10 +8,10 @@ import { getUserFromSession } from '@/lib/session';
 async function getStoreId() {
     const user = await getUserFromSession();
     if (!user) return null;
-    await dbConnect();
-    const store = await Store.findOne({ userId: user._id });
+    
+    const store = await storeModel.getByUserId(user.id);
     if (!store) return null;
-    return store._id;
+    return store.id;
 }
 
 const variantOptionSchema = z.object({
@@ -34,7 +32,8 @@ const productSchema = z.object({
   discountType: z.enum(['percentage', 'amount']).optional(),
   stock: z.coerce.number().min(0, { message: 'Stock must be a positive number' }),
   productType: z.enum(['product', 'service']),
-  variants: z.string() // Expecting a JSON string for variants
+  variants: z.string(), // Expecting a JSON string for variants
+  images: z.string().optional(), // JSON stringified array of image URLs
 });
 
 export async function addProduct(prevState: any, formData: FormData) {
@@ -54,7 +53,7 @@ export async function addProduct(prevState: any, formData: FormData) {
     };
   }
   
-  const { title, price, cost, stock, productType, discountValue, discountType, variants: variantsJSON } = validatedFields.data;
+  const { title, price, cost, stock, productType, discountValue, discountType, variants: variantsJSON, images: imagesJSON } = validatedFields.data;
   
   let variants = [];
   try {
@@ -67,20 +66,27 @@ export async function addProduct(prevState: any, formData: FormData) {
   }
 
   try {
-    await dbConnect();
+    // Parse images JSON if provided
+    const images = imagesJSON ? (JSON.parse(imagesJSON) as string[]).filter(Boolean) : undefined;
 
-    const newProduct = {
-      storeId: storeId,
+    // Create product with variants
+    await productModel.createWithVariants({
+      store_id: storeId,
       title,
       price,
       cost,
       stock,
-      productType,
-      variants,
-      discount: (discountValue && discountType) ? { value: discountValue, type: discountType } : undefined,
-    };
-
-    await Product.create(newProduct);
+      product_type: productType,
+      discount_type: discountType,
+      discount_value: discountValue,
+      images,
+    }, variants.flatMap((variant: any) =>
+      variant.options.map((option: any) => ({
+        variant_type: variant.type,
+        variant_name: option.name,
+        stock: option.stock,
+      }))
+    ));
     
     revalidatePath('/dashboard/products');
     return { success: true, message: 'Product added successfully!' };
@@ -112,7 +118,7 @@ export async function updateProduct(prevState: any, formData: FormData) {
         };
     }
 
-    const { productId, title, price, cost, stock, productType, discountValue, discountType, variants: variantsJSON } = validatedFields.data;
+    const { productId, title, price, cost, stock, productType, discountValue, discountType, variants: variantsJSON, images: imagesJSON } = validatedFields.data;
 
     let variants = [];
     try {
@@ -125,23 +131,32 @@ export async function updateProduct(prevState: any, formData: FormData) {
     }
 
     try {
-        await dbConnect();
-        
-        const productToUpdate = await Product.findOne({ _id: productId, storeId: storeId });
-
-        if (!productToUpdate) {
+        // Check if product exists and belongs to user's store
+        const existingProduct = await productModel.getById(productId);
+        if (!existingProduct || existingProduct.store_id !== storeId) {
             return { message: 'Product not found or you do not have permission to edit it.' };
         }
 
-        productToUpdate.title = title;
-        productToUpdate.price = price;
-        productToUpdate.cost = cost;
-        productToUpdate.stock = stock;
-        productToUpdate.productType = productType;
-        productToUpdate.variants = variants;
-        productToUpdate.discount = (discountValue && discountType) ? { value: discountValue, type: discountType } : undefined;
+        // Parse images JSON if provided
+        const images = imagesJSON ? (JSON.parse(imagesJSON) as string[]).filter(Boolean) : undefined;
 
-        await productToUpdate.save();
+        // Update product with variants
+        await productModel.updateWithVariants(productId, {
+            title,
+            price,
+            cost,
+            stock,
+            product_type: productType,
+            discount_type: discountType,
+            discount_value: discountValue,
+            images,
+        }, variants.flatMap((variant: any) =>
+            variant.options.map((option: any) => ({
+                variant_type: variant.type,
+                variant_name: option.name,
+                stock: option.stock,
+            }))
+        ));
 
         revalidatePath('/dashboard/products');
         return { success: true, message: 'Product updated successfully!' };

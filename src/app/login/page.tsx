@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Briefcase } from "lucide-react";
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { login } from '@/app/actions/auth';
 
 const initialState = {
@@ -31,7 +33,15 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [state, formAction] = useActionState(login, initialState);
+
+  // Handle redirect after successful login
+  useEffect(() => {
+    if (state?.success && state?.redirect) {
+      router.push(state.redirect);
+    }
+  }, [state, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">

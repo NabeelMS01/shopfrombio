@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import dbConnect from './mongoose';
-import User, { IUser } from '@/models/User';
+import { userModel } from './models';
 
 // Using React's cache to deduplicate requests within a single render pass.
 export const getUserFromSession = async () => {
@@ -11,24 +10,28 @@ export const getUserFromSession = async () => {
     }
 
     try {
-        const decoded = jwt.verify(sessionCookie, process.env.JWT_SECRET!) as { userId: string };
+        if (!process.env.JWT_SECRET) {
+            console.error('JWT_SECRET is not set');
+            return null;
+        }
+        
+        const decoded = jwt.verify(sessionCookie, process.env.JWT_SECRET) as { userId: string };
         if (!decoded.userId) {
             return null;
         }
 
-        await dbConnect();
-        // lean() returns a plain JS object, which is faster and avoids Mongoose-specific properties.
-        const user = await User.findById<IUser>(decoded.userId).lean(); 
-        
+        // Get user from model
+        const user = await userModel.getById(decoded.userId);
         if (!user) {
             return null;
         }
 
         // Ensure we return a plain object with only the necessary fields
         return {
-            _id: user._id.toString(),
-            firstName: user.firstName,
-            lastName: user.lastName,
+            id: user.id,
+            _id: user.id, // Keep _id for backward compatibility
+            firstName: user.first_name,
+            lastName: user.last_name,
             email: user.email,
         };
 

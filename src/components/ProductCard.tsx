@@ -8,7 +8,7 @@ import { useCart } from "@/hooks/use-cart";
 import { ShoppingCart } from "lucide-react";
 
 type Product = {
-    _id: string;
+    id: string;
     title: string;
     price: number;
     images?: string[];

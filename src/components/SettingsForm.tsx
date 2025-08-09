@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { updateStore } from '@/app/actions/store';
 import { useToast } from '@/hooks/use-toast';
 
-const initialState = {
+const initialState: any = {
   message: '',
   errors: {},
   success: false,
@@ -76,7 +76,7 @@ export default function SettingsForm({ store }: { store: any }) {
           </div>
           <div className="grid gap-3">
             <Label htmlFor="razorpay-key">Razorpay Key ID</Label>
-            <Input id="razorpay-key" name="razorpayKeyId" type="text" defaultValue={store.razorpayKeyId} placeholder="rzp_test_123..." />
+            <Input id="razorpay-key" name="razorpayKeyId" type="text" defaultValue={store.razorpay_key_id} placeholder="rzp_test_123..." />
             <p className="text-sm text-muted-foreground">
               Enter your Razorpay Key ID to accept payments.
             </p>

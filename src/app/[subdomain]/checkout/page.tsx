@@ -91,7 +91,7 @@ export default function CheckoutPage() {
                         <h2 className="text-2xl font-semibold mb-6">Order Summary</h2>
                         <div className="space-y-4">
                             {items.map(item => (
-                                <div key={item._id} className="flex items-center justify-between">
+                                <div key={item.id} className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <Image 
                                             src={item.images?.[0] || 'https://placehold.co/64x64.png'} 

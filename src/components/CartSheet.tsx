@@ -37,7 +37,7 @@ export default function CartSheet() {
                 <ScrollArea className="my-4 flex-1 px-6">
                     <div className="flex flex-col gap-6">
                         {items.map(item => (
-                            <div key={item._id} className="flex items-center space-x-4">
+                            <div key={item.id} className="flex items-center space-x-4">
                                 <div className="relative h-20 w-20 overflow-hidden rounded-md">
                                     <Image
                                         src={item.images?.[0] || 'https://placehold.co/80x80.png'}
@@ -54,12 +54,12 @@ export default function CartSheet() {
                                             type="number"
                                             min="1"
                                             value={item.quantity}
-                                            onChange={(e) => updateItemQuantity(item._id, parseInt(e.target.value))}
+                                            onChange={(e) => updateItemQuantity(item.id, parseInt(e.target.value))}
                                             className="w-16 p-1 border rounded-md text-center"
                                         />
                                     </div>
                                 </div>
-                                <Button variant="ghost" size="icon" onClick={() => removeItem(item._id)}>
+                                <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                             </div>

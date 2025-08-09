@@ -1,8 +1,6 @@
 'use server';
 
-import dbConnect from '@/lib/mongoose';
-import User from '@/models/User';
-import bcrypt from 'bcryptjs';
+import { userModel } from '@/lib/models';
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import jwt from 'jsonwebtoken';
@@ -29,41 +27,42 @@ export async function signup(prevState: any, formData: FormData) {
   
   const { firstName, lastName, email, password } = validatedFields.data;
   let user;
+  
   try {
-    await dbConnect();
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // Check if user already exists
+    const exists = await userModel.existsByEmail(email);
+    if (exists) {
       return { message: 'User with this email already exists.' };
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    user = await User.create({
-      firstName,
-      lastName,
+    // Create new user with password hashing
+    user = await userModel.createWithPassword({
+      first_name: firstName,
+      last_name: lastName,
       email,
-      password: hashedPassword,
+      password,
     });
     
+    console.log('User created successfully:', user);
+    
+    // Set session cookie
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
+      expiresIn: '7d',
+    });
+
+    (await cookies()).set('session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/',
+    });
+
+    return { success: true, redirect: '/dashboard' };
+    
   } catch (e) {
-    console.error(e);
+    console.error('Signup error:', e);
     return { message: 'Something went wrong. Please try again.' };
   }
-
-  // Set session cookie
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, {
-    expiresIn: '7d',
-  });
-
-  cookies().set('session', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24 * 7, // 1 week
-    path: '/',
-  });
-
-  redirect('/dashboard');
 }
 
 
@@ -87,16 +86,9 @@ export async function login(prevState: any, formData: FormData) {
   const { email, password } = validatedFields.data;
   let user;
   try {
-    await dbConnect();
-    user = await User.findOne({ email });
-
+    // Verify user credentials
+    user = await userModel.verifyPassword(email, password);
     if (!user) {
-      return { message: 'Invalid credentials.' };
-    }
-
-    const passwordsMatch = await bcrypt.compare(password, user.password);
-
-    if (!passwordsMatch) {
       return { message: 'Invalid credentials.' };
     }
   } catch (error) {
@@ -105,22 +97,22 @@ export async function login(prevState: any, formData: FormData) {
   }
 
   // Set session cookie
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, {
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
     expiresIn: '7d',
   });
 
-  cookies().set('session', token, {
+  (await cookies()).set('session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     maxAge: 60 * 60 * 24 * 7, // 1 week
     path: '/',
   });
 
-  redirect('/dashboard');
+  return { success: true, redirect: '/dashboard' };
 }
 
 
 export async function logout() {
-  cookies().delete('session');
+  (await cookies()).delete('session');
   redirect('/login');
 }
