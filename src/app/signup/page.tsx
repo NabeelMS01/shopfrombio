@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Briefcase } from "lucide-react";
-import { useActionState } from 'react';
+import { Briefcase, Eye, EyeOff } from "lucide-react";
+import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -35,6 +35,7 @@ function SubmitButton() {
 export default function SignupPage() {
   const router = useRouter();
   const [state, formAction] = useActionState(signup, initialState);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Handle redirect after successful signup
   useEffect(() => {
@@ -84,7 +85,17 @@ export default function SignupPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" name="password" type="password" required />
+                <div className="relative">
+                  <Input id="password" name="password" type={showPassword ? 'text' : 'password'} required />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute inset-y-0 right-2 flex items-center text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                  {state.errors?.password && <p className="text-sm text-destructive">{state.errors.password[0]}</p>}
               </div>
               {state.message && <p className="text-sm text-destructive text-center">{state.message}</p>}
