@@ -1,7 +1,7 @@
 'use client';
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/hooks/use-cart";
@@ -22,10 +22,15 @@ type ProductCardProps = {
 export default function ProductCard({ product, currencySymbol = '$' }: ProductCardProps) {
     const { addItem } = useCart();
     const router = useRouter();
+    const pathname = usePathname();
 
     const handleBuyNow = () => {
         addItem(product, 1);
-        router.push('/checkout');
+        // If we are on a tenant route /{subdomain}/..., keep the prefix
+        const parts = pathname.split('/').filter(Boolean);
+        const maybeSub = parts[0];
+        const target = maybeSub ? `/${maybeSub}/checkout` : '/checkout';
+        router.push(target);
     };
 
     return (
