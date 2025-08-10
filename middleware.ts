@@ -1,6 +1,6 @@
 // middleware.ts
 import { type NextRequest, NextResponse } from 'next/server';
-export const config = { matcher: ['/:path*'] };
+export const config = { matcher: ['/:path'] };
 
 export default function middleware(req: NextRequest) {
   const url = req.nextUrl;
