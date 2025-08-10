@@ -19,6 +19,8 @@ export default function middleware(req: NextRequest) {
 
   // PROD: *.APP_ROOT_DOMAIN → /[subdomain]
   const root = process.env.APP_ROOT_DOMAIN; // e.g., 'shopfrombio.com'
+
+  console.log(root,'====================root');
   if (root && host.endsWith(`.${root}`) && host !== root) {
     const sub = host.slice(0, -(root.length + 1));
     if (!path.startsWith(`/${sub}`)) {
