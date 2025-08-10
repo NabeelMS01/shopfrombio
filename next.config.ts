@@ -1,57 +1,62 @@
-import { config } from 'dotenv';
+import type { NextConfig } from "next"
+import { config as loadEnv } from "dotenv"
 
-config({ path: './.env' });
+// Optional: Next already loads .env.* files, but if you need a custom path:
+loadEnv({ path: "./.env" })
 
-const escapeHost = (host: string) => host.replace(/\./g, '\\.');
+const escapeHost = (host: string) => host.replace(/\./g, "\\.")
 
-const nextConfig = {
-  experimental: {
-    allowedDevOrigins: [
-      // Explicit examples for local dev; adjust as needed
-      'http://caseplanet.localhost:3000',
-      'http://caseplanet.lvh.me:3000',
-    ],
-  },
+const nextConfig: NextConfig = {
+  // Move out of `experimental` — must be top-level.
+  // Use hostnames (supports wildcards), not protocol/port.
+  allowedDevOrigins: [
+    "localhost",
+    "127.0.0.1",
+    "*.localhost",
+    "*.lvh.me",
+    "caseplanet.localhost",
+  ],
+
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'placehold.co', port: '', pathname: '/**' },
-      { protocol: 'https', hostname: 'utfs.io', port: '', pathname: '/**' },
+      { protocol: "https", hostname: "placehold.co", port: "", pathname: "/**" },
+      { protocol: "https", hostname: "utfs.io", port: "", pathname: "/**" },
     ],
   },
+
   reactStrictMode: false,
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
+
   async rewrites() {
-    const rules: any[] = [];
+    const rules: any[] = []
 
     // Production wildcard based on APP_ROOT_DOMAIN (e.g., shopfrombio.com)
-    const root = process.env.APP_ROOT_DOMAIN;
+    const root = process.env.APP_ROOT_DOMAIN
     if (root) {
       rules.push({
-        source: '/:path*',
-        has: [
-          { type: 'host', value: `(?<subdomain>[^.]+)\.${escapeHost(root)}` },
-        ],
-        destination: '/:subdomain/:path*',
-      });
+        source: "/:path*",
+        has: [{ type: "host", value: `(?<subdomain>[^.]+)\\.${escapeHost(root)}` }],
+        destination: "/:subdomain/:path*",
+      })
     }
 
-    // Dev: *.localhost
+    // Dev: *.localhost (allow any port)
     rules.push({
-      source: '/:path*',
-      has: [{ type: 'host', value: '(?<subdomain>[^.]+)\.localhost' }],
-      destination: '/:subdomain/:path*',
-    });
+      source: "/:path*",
+      has: [{ type: "host", value: "(?<subdomain>[^.]+)\\.localhost(:\\d+)?" }],
+      destination: "/:subdomain/:path*",
+    })
 
-    // Dev: *.lvh.me
+    // Dev: *.lvh.me (allow any port)
     rules.push({
-      source: '/:path*',
-      has: [{ type: 'host', value: '(?<subdomain>[^.]+)\.lvh\.me' }],
-      destination: '/:subdomain/:path*',
-    });
+      source: "/:path*",
+      has: [{ type: "host", value: "(?<subdomain>[^.]+)\\.lvh\\.me(:\\d+)?" }],
+      destination: "/:subdomain/:path*",
+    })
 
-    return rules;
+    return rules
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig
