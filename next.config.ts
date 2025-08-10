@@ -10,11 +10,14 @@ const nextConfig: NextConfig = {
   // Move out of `experimental` — must be top-level.
   // Use hostnames (supports wildcards), not protocol/port.
   allowedDevOrigins: [
+    "lvh.me",
     "localhost",
     "127.0.0.1",
     "*.localhost",
     "*.lvh.me",
     "caseplanet.localhost",
+    'http://caseplanet.lvh.me:3000',
+    'http://caseplanet.localhost:3000',
   ],
 
   images: {
