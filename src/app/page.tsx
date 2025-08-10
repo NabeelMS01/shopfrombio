@@ -9,7 +9,11 @@ import { redirect } from "next/navigation";
 export default async function HomePage() {
   // If the request is for a subdomain host (like foo.localhost), redirect to /[subdomain]
   const host = (await headers()).get('host') || '';
-  const hostName = host.split(':')[0];
+  const h = host.split(':')[0];
+  if ((h.endsWith('.localhost') && h !== 'localhost') || (h.endsWith('.lvh.me') && h !== 'lvh.me')) {
+    const sub = h.split('.')[0];
+    redirect(`/${sub}`);
+  }
 
 
   return (
