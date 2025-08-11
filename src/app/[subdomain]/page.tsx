@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import ProductCard from "@/components/ProductCard";
+import { StoreProvider } from "@/hooks/use-store";
 
 export const dynamic = 'force-dynamic';
 
@@ -36,24 +37,24 @@ async function getStore(subdomain: string) {
   if (prodErr) {
     console.error('Products load error:', prodErr);
   }
+  
+  console.log('Products found for store:', products);
   return { ...store, products: products || [] };
 }
 
 type StorePageParams = { params: { subdomain: string } };
 
 export default async function StorePage({ params }: StorePageParams) {
-  console.log(params.subdomain,'====================params.subdomain');
+  const { subdomain } = await params;
+  console.log(subdomain,'====================params.subdomain');
   
-  const store = await getStore(params.subdomain);
+  const store = await getStore(subdomain);
   if (!store) notFound();
 
-  const currencySymbol = new Intl.NumberFormat('en-US', { style: 'currency', currency: store.currency || 'USD' })
-    .formatToParts(0)
-    .find(p => p.type === 'currency')?.value || '$';
-
   return (
-    <div className="flex flex-col min-h-screen">
-      <StoreHeader storeName={store.name} />
+    <StoreProvider store={store}>
+      <div className="flex flex-col min-h-screen">
+        <StoreHeader storeName={store.name} subdomain={subdomain} />
       <main className="flex-1">
         <section className="w-full h-[50vh] bg-muted flex items-center justify-center">
           <div className="container px-4 md:px-6 text-center">
@@ -69,7 +70,7 @@ export default async function StorePage({ params }: StorePageParams) {
             {store.products.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {store.products.map((product: any) => (
-                  <ProductCard key={product.id} product={product} currencySymbol={currencySymbol} />
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
@@ -81,7 +82,8 @@ export default async function StorePage({ params }: StorePageParams) {
           </div>
         </section>
       </main>
-      <StoreFooter storeName={store.name} />
-    </div>
+              <StoreFooter storeName={store.name} />
+      </div>
+    </StoreProvider>
   );
 }

@@ -25,10 +25,12 @@ type Product = {
     title: string;
     price: number;
     cost?: number;
-    discount?: { value: number, type: 'percentage' | 'amount' };
+    discount_type?: 'percentage' | 'amount';
+    discount_value?: number;
     stock: number;
-    productType: 'product' | 'service';
-    variants: Variant[];
+    product_type: 'product' | 'service';
+    images?: string[];
+    product_variants?: any[];
 };
 
 type ProductFormDialogProps = {
@@ -81,9 +83,14 @@ export default function ProductFormDialog({ product, children, triggerType = 'bu
 
   useEffect(() => {
     if(open) {
-        setVariants(product?.variants || []);
+        // Convert product_variants from database format to component format
+        const convertedVariants = product?.product_variants?.map((pv: any) => ({
+          type: pv.variant_type,
+          options: [{ name: pv.variant_name, stock: pv.stock }]
+        })) || [];
+        setVariants(convertedVariants);
     }
-  }, [open, product?.variants]);
+  }, [open, product?.product_variants]);
   
   const handleAddVariant = () => {
     setVariants([...variants, { type: '', options: [{ name: '', stock: undefined }] }]);
@@ -184,8 +191,8 @@ export default function ProductFormDialog({ product, children, triggerType = 'bu
                  <div>
                     <Label>Discount</Label>
                     <div className="flex gap-2">
-                        <Input name="discountValue" type="number" step="0.01" placeholder="e.g. 5" defaultValue={product?.discount?.value} />
-                        <Select name="discountType" defaultValue={product?.discount?.type || "percentage"}>
+                        <Input name="discountValue" type="number" step="0.01" placeholder="e.g. 5" defaultValue={product?.discount_value} />
+                        <Select name="discountType" defaultValue={product?.discount_type || "percentage"}>
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>
@@ -204,7 +211,7 @@ export default function ProductFormDialog({ product, children, triggerType = 'bu
              </div>
                            <div>
                  <Label>Product Type</Label>
-                 <Select name="productType" defaultValue={product?.productType || "product"}>
+                 <Select name="productType" defaultValue={product?.product_type || "product"}>
                      <SelectTrigger>
                          <SelectValue />
                      </SelectTrigger>
@@ -219,8 +226,10 @@ export default function ProductFormDialog({ product, children, triggerType = 'bu
               <div>
                  <Label>Images</Label>
                  <div className="mt-2">
+                   {/* Debug: Log product images */}
+                   {console.log('Product images:', product?.images)}
                    {/* UploadThing multiple uploads */}
-                   <UploadImageField name="images" />
+                   <UploadImageField name="images" defaultUrls={product?.images || []} />
                  </div>
               </div>
 

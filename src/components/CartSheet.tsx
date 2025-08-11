@@ -1,8 +1,9 @@
 'use client';
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "@/hooks/use-cart";
+import { useStore } from "@/hooks/use-store";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -19,9 +20,15 @@ import { Trash2 } from "lucide-react";
 export default function CartSheet() {
   const { items, removeItem, updateItemQuantity, totalPrice, isCartOpen, closeCart } = useCart();
   const router = useRouter();
+  const pathname = usePathname();
+  const { currencySymbol } = useStore();
 
   const handleCheckout = () => {
-    router.push('/checkout');
+    const parts = pathname.split('/').filter(Boolean);
+    const maybeSub = parts[0];
+    const target = maybeSub ? `/${maybeSub}/checkout` : '/checkout';
+
+    router.push(target);
     closeCart();
   };
 
@@ -48,18 +55,23 @@ export default function CartSheet() {
                                 </div>
                                 <div className="flex flex-1 flex-col gap-1 self-start text-sm">
                                     <span className="font-medium">{item.title}</span>
-                                    <span className="text-muted-foreground">${item.price.toFixed(2)}</span>
+                                    {item.variantInfo && (
+                                        <span className="text-xs text-muted-foreground">
+                                            {item.variantInfo}
+                                        </span>
+                                    )}
+                                    <span className="text-muted-foreground">{currencySymbol}{item.price.toFixed(2)}</span>
                                     <div className="flex items-center">
                                         <input
                                             type="number"
                                             min="1"
                                             value={item.quantity}
-                                            onChange={(e) => updateItemQuantity(item.id, parseInt(e.target.value))}
+                                            onChange={(e) => updateItemQuantity(item.id, parseInt(e.target.value), item.selectedVariants)}
                                             className="w-16 p-1 border rounded-md text-center"
                                         />
                                     </div>
                                 </div>
-                                <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}>
+                                <Button variant="ghost" size="icon" onClick={() => removeItem(item.id, item.selectedVariants)}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                             </div>
@@ -70,7 +82,7 @@ export default function CartSheet() {
                     <div className="w-full space-y-4">
                         <div className="flex justify-between text-lg font-semibold">
                             <span>Total</span>
-                            <span>${totalPrice.toFixed(2)}</span>
+                            <span>{currencySymbol}{totalPrice.toFixed(2)}</span>
                         </div>
                          <Button onClick={handleCheckout} className="w-full" size="lg">
                             Proceed to Checkout

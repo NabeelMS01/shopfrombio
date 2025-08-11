@@ -1,23 +1,26 @@
 'use client';
 
 import { useCart } from "@/hooks/use-cart";
+import { useStore } from "@/hooks/use-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 
-// We don't have store data here easily without another db call,
-// so we can either pass it via props/context or just use a generic name.
-// For now, let's just use a placeholder for the store name.
-const STORE_NAME = "Your Store"; 
+ 
 
 export default function CheckoutPage() {
     const { items, totalPrice, clearCart } = useCart();
     const router = useRouter();
+    const pathname = usePathname();
+    const { store, currencySymbol } = useStore();
+    
+    // Extract subdomain from pathname
+    const subdomain = pathname.split('/')[1];
 
     const handleCheckout = (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,13 +28,13 @@ export default function CheckoutPage() {
         console.log("Processing payment for:", items);
         alert("Thank you for your order! (This is a demo)");
         clearCart();
-        router.push('/'); // Redirect to home page after "purchase"
+        router.push(`/${subdomain}`); // Redirect back to store after "purchase"
     };
 
     if (items.length === 0) {
         return (
              <div className="flex flex-col min-h-screen">
-                <StoreHeader storeName={STORE_NAME} />
+                <StoreHeader storeName={store.name} subdomain={subdomain} />
                 <main className="flex-1 flex items-center justify-center">
                     <div className="text-center">
                         <h1 className="text-2xl font-semibold">Your cart is empty</h1>
@@ -41,14 +44,14 @@ export default function CheckoutPage() {
                         </Button>
                     </div>
                 </main>
-                 <StoreFooter storeName={STORE_NAME} />
+                 <StoreFooter storeName={store.name} />
             </div>
         );
     }
 
     return (
         <div className="flex flex-col min-h-screen">
-            <StoreHeader storeName={STORE_NAME} />
+            <StoreHeader storeName={store.name} subdomain={subdomain} />
             <main className="flex-1 container mx-auto px-4 py-8">
                 <div className="grid md:grid-cols-2 gap-12">
                     {/* Shipping & Payment Form */}
@@ -102,22 +105,27 @@ export default function CheckoutPage() {
                                         />
                                         <div>
                                             <p className="font-medium">{item.title}</p>
+                                            {item.variantInfo && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    {item.variantInfo}
+                                                </p>
+                                            )}
                                             <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                                         </div>
                                     </div>
-                                    <p className="font-medium">${(item.price * (item.quantity ?? 1)).toFixed(2)}</p>
+                                    <p className="font-medium">{currencySymbol}{(item.price * (item.quantity ?? 1)).toFixed(2)}</p>
                                 </div>
                             ))}
                         </div>
                         <Separator className="my-6" />
                         <div className="flex justify-between font-semibold text-lg">
                             <p>Total</p>
-                            <p>${totalPrice.toFixed(2)}</p>
+                            <p>{currencySymbol}{totalPrice.toFixed(2)}</p>
                         </div>
                     </div>
                 </div>
             </main>
-            <StoreFooter storeName={STORE_NAME} />
+            <StoreFooter storeName={store.name} />
         </div>
     );
 }

@@ -5,7 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/hooks/use-cart";
-import { ShoppingCart } from "lucide-react";
+import { useStore } from "@/hooks/use-store";
+import { ShoppingCart, Eye } from "lucide-react";
 
 type Product = {
     id: string;
@@ -16,13 +17,13 @@ type Product = {
 
 type ProductCardProps = {
     product: Product;
-    currencySymbol?: string;
 };
 
-export default function ProductCard({ product, currencySymbol = '$' }: ProductCardProps) {
+export default function ProductCard({ product }: ProductCardProps) {
     const { addItem } = useCart();
     const router = useRouter();
     const pathname = usePathname();
+    const { currencySymbol } = useStore();
 
     const handleBuyNow = () => {
         addItem(product, 1);
@@ -34,8 +35,8 @@ export default function ProductCard({ product, currencySymbol = '$' }: ProductCa
     };
 
     return (
-        <Card className="flex flex-col">
-            <CardHeader className="p-0 border-b">
+        <Card className="flex flex-col group cursor-pointer hover:shadow-lg transition-shadow">
+            <CardHeader className="p-0 border-b relative">
                 <Image
                     src={product.images?.[0] || "https://placehold.co/600x400.png"}
                     alt={product.title}
@@ -44,6 +45,24 @@ export default function ProductCard({ product, currencySymbol = '$' }: ProductCa
                     className="object-cover w-full h-64"
                     data-ai-hint="product fashion"
                 />
+                {/* Quick View Overlay */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <Button 
+                        variant="secondary" 
+                        size="sm"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            const parts = pathname.split('/').filter(Boolean);
+                            const maybeSub = parts[0];
+                            const target = maybeSub ? `/${maybeSub}/product/${product.id}` : `/product/${product.id}`;
+                            router.push(target);
+                        }}
+                        className="bg-white/90 hover:bg-white text-black"
+                    >
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Details
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent className="p-4 flex-grow">
                 <CardTitle className="text-lg">{product.title}</CardTitle>
